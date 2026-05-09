@@ -81,55 +81,101 @@ export function Dashboard() {
   }, []);
 
   // ==========================================
-  // WEBSOCKET DARI EC2 (realtime)
+  // REKOMENDASI: realtime + polling fallback
   // ==========================================
   useEffect(() => {
     fetchInitialData();
 
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL!;
-    const ws = new WebSocket(wsUrl);
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL;
+    let ws: WebSocket | null = null;
+    let pollingId: number | null = null;
+    let reconnectId: number | null = null;
 
-    ws.onopen = () => console.log("[WS] Connected to EC2");
+    const startPolling = () => {
+      if (pollingId !== null) return;
+      pollingId = window.setInterval(() => {
+        fetchInitialData();
+      }, 5000);
+    };
 
-    ws.onmessage = (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        console.log("[WS] Received:", data);
-
-        const dt = new Date(data.waktu);
-
-        const newTx: Transaction = {
-          id: `${data.uid}-${data.waktu}-${Date.now()}`,
-          cardId: data.uid,
-          date: dt.toISOString().split("T")[0],
-          time: dt.toLocaleTimeString("en-US", { hour12: false }),
-          status: data.status === "DITERIMA" ? "ACCEPTED" : "REJECTED",
-          gate: data.tipe_gate === "MASUK" ? "ENTRY" : "EXIT",
-        };
-
-        setTransactions((prev) => [newTx, ...prev].slice(0, 10));
-
-        // Update gate status visual — hanya kalau DITERIMA
-        if (data.status === "DITERIMA") {
-          if (data.tipe_gate === "MASUK") {
-            setEntryGateStatus("OPEN");
-            setTimeout(() => setEntryGateStatus("CLOSED"), 3000);
-            setVehiclesEntered((prev) => prev + 1);
-          } else if (data.tipe_gate === "KELUAR") {
-            setExitGateStatus("OPEN");
-            setTimeout(() => setExitGateStatus("CLOSED"), 3000);
-            setVehiclesExited((prev) => prev + 1);
-          }
-        }
-      } catch (err) {
-        console.error("[WS] Parse error:", err);
+    const stopPolling = () => {
+      if (pollingId !== null) {
+        window.clearInterval(pollingId);
+        pollingId = null;
       }
     };
 
-    ws.onclose = () => console.log("[WS] Disconnected");
-    ws.onerror = (err) => console.error("[WS] Error:", err);
+    const createWebSocket = () => {
+      if (!wsUrl) {
+        startPolling();
+        return;
+      }
 
-    return () => ws.close();
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log("[WS] Connected to EC2");
+        stopPolling();
+      };
+
+      ws.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          console.log("[WS] Received:", data);
+
+          const dt = new Date(data.waktu);
+
+          const newTx: Transaction = {
+            id: `${data.uid}-${data.waktu}-${Date.now()}`,
+            cardId: data.uid,
+            date: dt.toISOString().split("T")[0],
+            time: dt.toLocaleTimeString("en-US", { hour12: false }),
+            status: data.status === "DITERIMA" ? "ACCEPTED" : "REJECTED",
+            gate: data.tipe_gate === "MASUK" ? "ENTRY" : "EXIT",
+          };
+
+          setTransactions((prev) => [newTx, ...prev].slice(0, 10));
+
+          if (data.status === "DITERIMA") {
+            if (data.tipe_gate === "MASUK") {
+              setEntryGateStatus("OPEN");
+              setTimeout(() => setEntryGateStatus("CLOSED"), 3000);
+              setVehiclesEntered((prev) => prev + 1);
+            } else if (data.tipe_gate === "KELUAR") {
+              setExitGateStatus("OPEN");
+              setTimeout(() => setExitGateStatus("CLOSED"), 3000);
+              setVehiclesExited((prev) => prev + 1);
+            }
+          }
+        } catch (err) {
+          console.error("[WS] Parse error:", err);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log("[WS] Disconnected, fallback to polling");
+        ws = null;
+        startPolling();
+        reconnectId = window.setTimeout(() => {
+          createWebSocket();
+        }, 5000);
+      };
+
+      ws.onerror = (err) => {
+        console.error("[WS] Error:", err);
+        if (ws?.readyState !== WebSocket.OPEN) {
+          startPolling();
+        }
+      };
+    };
+
+    createWebSocket();
+
+    return () => {
+      if (ws) ws.close();
+      if (pollingId !== null) window.clearInterval(pollingId);
+      if (reconnectId !== null) window.clearTimeout(reconnectId);
+    };
   }, [fetchInitialData]);
 
   // ==========================================
