@@ -23,8 +23,9 @@ export async function GET() {
     const items = result.Items || [];
 
     // Hitung statistik
-    const masuk = items.filter((i) => i.tipe_gate === "MASUK").length;
-    const keluar = items.filter((i) => i.tipe_gate === "KELUAR").length;
+    const accepted = items.filter((i) => i.status === "DITERIMA");
+    const masuk = accepted.filter((i) => i.tipe_gate === "MASUK").length;
+    const keluar = accepted.filter((i) => i.tipe_gate === "KELUAR").length;
 
     // Urutkan terbaru di atas
     const sorted = items.sort(
@@ -32,7 +33,7 @@ export async function GET() {
     );
 
     return NextResponse.json({
-      transactions: sorted.slice(0, 20), // 20 transaksi terbaru
+      transactions: sorted.slice(0, 20),
       stats: {
         total_masuk: masuk,
         total_keluar: keluar,
