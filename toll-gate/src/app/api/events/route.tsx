@@ -1,9 +1,6 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import {
-  DynamoDBDocumentClient,
-  ScanCommand,
-} from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { NextResponse } from "next/server";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
 const client = DynamoDBDocumentClient.from(
   new DynamoDBClient({

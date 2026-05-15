@@ -21,7 +21,7 @@ type Transaction = {
   cardId: string;
   date: string;
   time: string;
-  month: string; // "YYYY-MM"
+  month: string; 
   status: "ACCEPTED" | "REJECTED";
   gate: "ENTRY" | "EXIT";
   biaya: number;
@@ -60,7 +60,6 @@ export function Dashboard() {
     };
   };
 
-  // FETCH AWAL DARI DYNAMODB (via API route)
   const fetchInitialData = useCallback(async () => {
     try {
       const res = await fetch("/api/events");
@@ -161,7 +160,6 @@ export function Dashboard() {
     }
   };
 
-  // filter dropdown
   const availableMonths = useMemo(() => {
     const months = Array.from(new Set(transactions.map((t) => t.month))).sort(
       (a, b) => b.localeCompare(a),
@@ -169,7 +167,6 @@ export function Dashboard() {
     return months;
   }, [transactions]);
 
-  // Filtered transactions
   const filteredTransactions = useMemo(() => {
     return transactions.filter((t) => {
       if (searchCard && !t.cardId.toLowerCase().includes(searchCard.toLowerCase())) return false;
@@ -179,7 +176,6 @@ export function Dashboard() {
     });
   }, [transactions, searchCard, filterMonth, filterStatus]);
 
-  // Export CSV
   const exportCSV = () => {
     const rows = filteredTransactions;
     const header = [
