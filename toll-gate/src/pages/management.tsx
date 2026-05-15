@@ -25,23 +25,26 @@ interface RFIDCard {
 const POLL_INTERVAL = 10_000;
 
 const ManagementPage = () => {
-  // ── State kartu (dari DynamoDB) ────────────────────────────────────────────
+  // ── State kartu ────────────────────────────────────────────────────────────
   const [cards, setCards]           = useState<RFIDCard[]>([]);
   const [isLoading, setIsLoading]   = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const timerRef                    = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [searchTerm, setSearchTerm]   = useState("");
+  const [searchTerm, setSearchTerm]     = useState("");
+  const [filterStatus, setFilterStatus] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
+
+  // ── Modal Add Card ─────────────────────────────────────────────────────────
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newCard, setNewCard]         = useState({ uid: "", owner: "", status: "ACTIVE" });
   const [modalError, setModalError]   = useState<string | null>(null);
   const [isSaving, setIsSaving]       = useState(false);
 
-  // ── State export ───────────────────────────────────────────────────────────
+  // ── Export ─────────────────────────────────────────────────────────────────
   const [exportStatus, setExportStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [exportError, setExportError]   = useState<string | null>(null);
 
-  // ── Fetch kartu dari DynamoDB via API ──────────────────────────────────────
+  // ── Fetch kartu ────────────────────────────────────────────────────────────
   const fetchCards = useCallback(async (showLoader = false) => {
     if (showLoader) setIsLoading(true);
     setFetchError(null);
@@ -49,7 +52,10 @@ const ManagementPage = () => {
       const res = await fetch("/api/cards");
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const data: RFIDCard[] = await res.json();
-      setCards(data);
+      const sorted = [...data].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      setCards(sorted);
     } catch (err) {
       setFetchError(err instanceof Error ? err.message : "Gagal mengambil data.");
     } finally {
@@ -57,35 +63,33 @@ const ManagementPage = () => {
     }
   }, []);
 
-  // ── Polling otomatis ───────────────────────────────────────────────────────
   useEffect(() => {
     fetchCards(true);
     timerRef.current = setInterval(() => fetchCards(false), POLL_INTERVAL);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [fetchCards]);
 
-  // ── Search ─────────────────────────────────────────────────────────────────
+  // ── Filter + Search ────────────────────────────────────────────────────────
   const filteredCards = useMemo(
     () =>
-      cards.filter(
-        (card) =>
+      cards.filter((card) => {
+        const matchSearch =
           card.uid.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          card.owner.toLowerCase().includes(searchTerm.toLowerCase())
-      ),
-    [cards, searchTerm]
+          card.owner.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchStatus = filterStatus === "ALL" || card.status === filterStatus;
+        return matchSearch && matchStatus;
+      }),
+    [cards, searchTerm, filterStatus]
   );
 
   // ── Stats ──────────────────────────────────────────────────────────────────
-  const stats = useMemo(
-    () => ({
-      total:    cards.length,
-      active:   cards.filter((c) => c.status === "ACTIVE").length,
-      inactive: cards.filter((c) => c.status === "INACTIVE").length,
-    }),
-    [cards]
-  );
+  const stats = useMemo(() => ({
+    total:    cards.length,
+    active:   cards.filter((c) => c.status === "ACTIVE").length,
+    inactive: cards.filter((c) => c.status === "INACTIVE").length,
+  }), [cards]);
 
-  // ── Helper: download blob ──────────────────────────────────────────────────
+  // ── Helper download blob ───────────────────────────────────────────────────
   const downloadBlob = (blob: Blob, filename: string) => {
     const url  = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -97,7 +101,7 @@ const ManagementPage = () => {
     URL.revokeObjectURL(url);
   };
 
-  // ── Export kartu RFID ──────────────────────────────────────────────────────
+  // ── Export Cards CSV (tanpa saldo) ─────────────────────────────────────────
   const handleExportCards = () => {
     if (cards.length === 0) return;
     const headers = ["uid", "owner", "date", "status"];
@@ -106,12 +110,13 @@ const ManagementPage = () => {
       headers.join(","),
       ...cards.map((row) => headers.map((h) => escape(row[h as keyof typeof row])).join(",")),
     ].join("\n");
-    const blob     = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const filename = `rfid_cards_${new Date().toISOString().split("T")[0]}.csv`;
-    downloadBlob(blob, filename);
+    downloadBlob(
+      new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+      `rfid_cards_${new Date().toISOString().split("T")[0]}.csv`
+    );
   };
 
-  // ── Export transaction logs ────────────────────────────────────────────────
+  // ── Export Transaction Logs ────────────────────────────────────────────────
   const handleExportLogs = async () => {
     setExportStatus("loading");
     setExportError(null);
@@ -121,20 +126,18 @@ const ManagementPage = () => {
         const json = await response.json().catch(() => ({}));
         throw new Error(json.error ?? `Server error: ${response.status}`);
       }
-      const blob     = await response.blob();
-      const filename = `tol_events_${new Date().toISOString().split("T")[0]}.csv`;
-      downloadBlob(blob, filename);
+      const blob = await response.blob();
+      downloadBlob(blob, `tol_events_${new Date().toISOString().split("T")[0]}.csv`);
       setExportStatus("success");
       setTimeout(() => setExportStatus("idle"), 3000);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Terjadi kesalahan.";
-      setExportError(message);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : "Terjadi kesalahan.");
       setExportStatus("error");
       setTimeout(() => setExportStatus("idle"), 5000);
     }
   };
 
-  // ── Add Card → simpan ke DynamoDB ─────────────────────────────────────────
+  // ── Add Card ───────────────────────────────────────────────────────────────
   const handleAddCard = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCard.uid || !newCard.owner) return;
@@ -151,7 +154,7 @@ const ManagementPage = () => {
         throw new Error(json.error ?? "Gagal menyimpan kartu.");
       }
       const saved: RFIDCard = await res.json();
-      setCards((prev) => [saved, ...prev]); // optimistic update
+      setCards((prev) => [saved, ...prev]);
       setNewCard({ uid: "", owner: "", status: "ACTIVE" });
       setIsModalOpen(false);
     } catch (err) {
@@ -161,7 +164,7 @@ const ManagementPage = () => {
     }
   };
 
-  // ── Delete → hapus dari DynamoDB ──────────────────────────────────────────
+  // ── Delete ─────────────────────────────────────────────────────────────────
   const handleDelete = async (uid: string) => {
     if (!confirm(`Hapus kartu ${uid}?`)) return;
     try {
@@ -170,7 +173,7 @@ const ManagementPage = () => {
         const json = await res.json().catch(() => ({}));
         throw new Error(json.error ?? "Gagal menghapus kartu.");
       }
-      setCards((prev) => prev.filter((c) => c.uid !== uid)); // optimistic update
+      setCards((prev) => prev.filter((c) => c.uid !== uid));
     } catch (err) {
       alert(err instanceof Error ? err.message : "Gagal menghapus kartu.");
     }
@@ -178,6 +181,7 @@ const ManagementPage = () => {
 
   const isExporting = exportStatus === "loading";
 
+  // ─────────────────────────────────────────────────────────────────────────────
   return (
     <div className={styles.container}>
       <Head>
@@ -190,7 +194,7 @@ const ManagementPage = () => {
           <p className={styles.subtitle}>Manage RFID cards and export system logs</p>
         </header>
 
-        {/* Stats */}
+        {/* ── Stats (tanpa saldo) ── */}
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
             <div className={styles.statHeader}><CreditCard size={14} /><span>Total Cards</span></div>
@@ -212,7 +216,7 @@ const ManagementPage = () => {
           </div>
         </div>
 
-        {/* Error banner fetch */}
+        {/* ── Error banner ── */}
         {fetchError && (
           <div style={{
             background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
@@ -226,7 +230,7 @@ const ManagementPage = () => {
           </div>
         )}
 
-        {/* Export Section */}
+        {/* ── Export Section ── */}
         <div className={styles.sectionCard}>
           <h2 className={styles.sectionTitle}>Export System Logs</h2>
 
@@ -235,18 +239,14 @@ const ManagementPage = () => {
               background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
               borderRadius: "8px", padding: "0.75rem 1rem", marginBottom: "1rem",
               color: "#f87171", fontSize: "0.85rem",
-            }}>
-              ⚠️ {exportError}
-            </div>
+            }}>⚠️ {exportError}</div>
           )}
           {exportStatus === "success" && (
             <div style={{
               background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)",
               borderRadius: "8px", padding: "0.75rem 1rem", marginBottom: "1rem",
               color: "#4ade80", fontSize: "0.85rem",
-            }}>
-              ✅ File berhasil diunduh!
-            </div>
+            }}>✅ File berhasil diunduh!</div>
           )}
 
           <div className={styles.exportButtons}>
@@ -271,13 +271,12 @@ const ManagementPage = () => {
               )}
             </button>
           </div>
-
           <p className={styles.btnDesc}>
             Generate comprehensive reports including all gate transactions, access logs, and system events
           </p>
         </div>
 
-        {/* RFID Card Registry */}
+        {/* ── RFID Card Registry ── */}
         <div className={styles.sectionCard}>
           <div className={styles.registryHeader}>
             <h2 className={styles.sectionTitle} style={{ marginBottom: 0 }}>
@@ -303,15 +302,46 @@ const ManagementPage = () => {
             </div>
           </div>
 
-          <div className={styles.searchContainer}>
-            <Search size={18} className={styles.searchIcon} />
-            <input
-              type="text"
-              placeholder="Search by UID or owner name..."
-              className={`${styles.searchInput} ${styles.searchIconPadding}`}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          {/* ── Search + Filter Status: satu baris ── */}
+          <div style={{ display: "flex", gap: "10px", margin: "1rem 0", alignItems: "center" }}>
+            <div className={styles.searchContainer} style={{ flex: 1, margin: 0 }}>
+              <Search size={18} className={styles.searchIcon} />
+              <input
+                type="text"
+                placeholder="Search by UID or owner name..."
+                className={`${styles.searchInput} ${styles.searchIconPadding}`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+              {(["ALL", "ACTIVE", "INACTIVE"] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setFilterStatus(s)}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: 6,
+                    border: "1px solid",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                    borderColor: filterStatus === s
+                      ? s === "ACTIVE" ? "#10b981" : s === "INACTIVE" ? "#ec4899" : "#00d4ff"
+                      : "rgba(255,255,255,0.1)",
+                    background: filterStatus === s
+                      ? s === "ACTIVE" ? "rgba(16,185,129,0.15)" : s === "INACTIVE" ? "rgba(236,72,153,0.15)" : "rgba(0,212,255,0.1)"
+                      : "transparent",
+                    color: filterStatus === s
+                      ? s === "ACTIVE" ? "#10b981" : s === "INACTIVE" ? "#ec4899" : "#00d4ff"
+                      : "#64748b",
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
 
           <table className={styles.tableContainer}>
@@ -363,7 +393,7 @@ const ManagementPage = () => {
           </table>
         </div>
 
-        {/* Modal Add Card */}
+        {/* ── Modal Add Card ── */}
         {isModalOpen && (
           <div style={{
             position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
@@ -373,7 +403,8 @@ const ManagementPage = () => {
           }}>
             <div style={{
               backgroundColor: "#0f172a", padding: "2rem",
-              borderRadius: "12px", border: "1px solid #1e293b", width: "400px",
+              borderRadius: "12px", border: "1px solid #1e293b", width: "420px",
+              maxHeight: "90vh", overflowY: "auto",
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1.5rem" }}>
                 <h3 style={{ color: "white", margin: 0 }}>Add New RFID Card</h3>
@@ -386,20 +417,18 @@ const ManagementPage = () => {
                   background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
                   borderRadius: "8px", padding: "0.75rem", marginBottom: "1rem",
                   color: "#f87171", fontSize: "0.8rem",
-                }}>
-                  ⚠️ {modalError}
-                </div>
+                }}>⚠️ {modalError}</div>
               )}
 
               <form onSubmit={handleAddCard} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <div>
                   <label style={{ color: "#94a3b8", fontSize: "0.8rem", display: "block", marginBottom: "0.5rem" }}>Card UID</label>
-                  <input required className={styles.searchInput} placeholder="e.g. RFID-9999"
+                  <input required className={styles.searchInput} placeholder="e.g. A3:B2:C1:D0"
                     value={newCard.uid} onChange={(e) => setNewCard({ ...newCard, uid: e.target.value })} />
                 </div>
                 <div>
                   <label style={{ color: "#94a3b8", fontSize: "0.8rem", display: "block", marginBottom: "0.5rem" }}>Owner Name</label>
-                  <input required className={styles.searchInput} placeholder="Full Name"
+                  <input required className={styles.searchInput} placeholder="Nama Lengkap"
                     value={newCard.owner} onChange={(e) => setNewCard({ ...newCard, owner: e.target.value })} />
                 </div>
                 <div>
@@ -414,7 +443,7 @@ const ManagementPage = () => {
                   type="submit"
                   className={styles.addBtn}
                   disabled={isSaving}
-                  style={{ width: "100%", justifyContent: "center", marginTop: "1rem", padding: "1rem" }}
+                  style={{ width: "100%", justifyContent: "center", marginTop: "0.5rem", padding: "0.9rem" }}
                 >
                   {isSaving
                     ? <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Menyimpan...</>

@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  // ── POST: tambah kartu baru ────────────────────────────────────────────────
+  // ── POST: tambah kartu baru
   if (req.method === "POST") {
     const { uid, owner, status } = req.body as {
       uid?: string;
@@ -36,6 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       owner:  owner.trim(),
       status: status === "INACTIVE" ? "INACTIVE" : "ACTIVE",
       date:   new Date().toISOString().split("T")[0],
+      saldo:  typeof req.body.saldo === "number" ? req.body.saldo : 200000,
     };
 
     try {
