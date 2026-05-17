@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ChevronDown,
   Clock,
+  Download,
   Target,
   TrendingUp,
   X,
@@ -596,6 +597,78 @@ const weeklyTrafficData = [
 ];
 
 // ─────────────────────────────────────────────
+//  Export Helpers
+// ─────────────────────────────────────────────
+
+const exportToCSV = (data: any[], filename: string) => {
+  if (!data || data.length === 0) {
+    alert("No data to export");
+    return;
+  }
+
+  const headers = Object.keys(data[0]);
+  const csv = [
+    headers.join(","),
+    ...data.map((row) => headers.map((h) => JSON.stringify(row[h])).join(",")),
+  ].join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+
+  link.setAttribute("href", url);
+  link.setAttribute("download", `${filename}_${fmtDate(new Date())}.csv`);
+  link.style.visibility = "hidden";
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+const ExportButton = ({
+  data,
+  filename,
+}: {
+  data: any[];
+  filename: string;
+}) => (
+  <button
+    onClick={() => exportToCSV(data, filename)}
+    title="Export data to CSV"
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "0.4rem",
+      padding: "0.5rem 0.9rem",
+      borderRadius: "6px",
+      border: "1px solid rgba(148, 163, 184, 0.3)",
+      backgroundColor: "rgba(148, 163, 184, 0.08)",
+      color: "#cbd5e1",
+      cursor: "pointer",
+      fontSize: "12px",
+      fontWeight: "500",
+      transition: "all 0.2s ease",
+    }}
+    onMouseEnter={(e) => {
+      (e.currentTarget as HTMLElement).style.borderColor = "#00d4ff";
+      (e.currentTarget as HTMLElement).style.backgroundColor =
+        "rgba(0, 212, 255, 0.1)";
+      (e.currentTarget as HTMLElement).style.color = "#00d4ff";
+    }}
+    onMouseLeave={(e) => {
+      (e.currentTarget as HTMLElement).style.borderColor =
+        "rgba(148, 163, 184, 0.3)";
+      (e.currentTarget as HTMLElement).style.backgroundColor =
+        "rgba(148, 163, 184, 0.08)";
+      (e.currentTarget as HTMLElement).style.color = "#cbd5e1";
+    }}
+  >
+    <Download size={14} />
+    Export
+  </button>
+);
+
+// ─────────────────────────────────────────────
 //  Helpers
 // ─────────────────────────────────────────────
 
@@ -697,9 +770,23 @@ const AnalyticsPage = () => {
 
         {/* Volume Chart */}
         <section className={styles.chartSection}>
-          <h2 className={styles.chartTitle}>
-            Traffic Volume - Hourly Breakdown
-          </h2>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "1rem",
+              marginBottom: "1rem",
+            }}
+          >
+            <h2 className={styles.chartTitle}>
+              Traffic Volume - Hourly Breakdown
+            </h2>
+            <ExportButton
+              data={getFilteredData(volumeData, volumeStartDate, volumeEndDate)}
+              filename="traffic-volume"
+            />
+          </div>
           <DateFilterControl
             startDate={volumeStartDate}
             setStartDate={setVolumeStartDate}
@@ -795,7 +882,25 @@ const AnalyticsPage = () => {
         <div className={styles.chartRow}>
           {/* Access Validation */}
           <section className={styles.chartSection} style={{ marginBottom: 0 }}>
-            <h2 className={styles.chartTitle}>Access Validation</h2>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "1rem",
+                marginBottom: "1rem",
+              }}
+            >
+              <h2 className={styles.chartTitle}>Access Validation</h2>
+              <ExportButton
+                data={getFilteredData(
+                  validationData,
+                  validationStartDate,
+                  validationEndDate,
+                )}
+                filename="access-validation"
+              />
+            </div>
             <DateFilterControl
               startDate={validationStartDate}
               setStartDate={setValidationStartDate}
@@ -878,9 +983,27 @@ const AnalyticsPage = () => {
 
           {/* Avg Travel Time */}
           <section className={styles.chartSection} style={{ marginBottom: 0 }}>
-            <h2 className={styles.chartTitle}>
-              Avg Travel Time - Hourly Trend
-            </h2>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "1rem",
+                marginBottom: "1rem",
+              }}
+            >
+              <h2 className={styles.chartTitle}>
+                Avg Travel Time - Hourly Trend
+              </h2>
+              <ExportButton
+                data={getFilteredData(
+                  latencyData,
+                  latencyStartDate,
+                  latencyEndDate,
+                )}
+                filename="avg-travel-time"
+              />
+            </div>
             <DateFilterControl
               startDate={latencyStartDate}
               setStartDate={setLatencyStartDate}
@@ -939,7 +1062,25 @@ const AnalyticsPage = () => {
 
         {/* Weekly Traffic Heatmap */}
         <section className={styles.chartSection} style={{ marginTop: "2rem" }}>
-          <h2 className={styles.chartTitle}>WEEKLY TRAFFIC HEATMAP</h2>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "1rem",
+              marginBottom: "1rem",
+            }}
+          >
+            <h2 className={styles.chartTitle}>WEEKLY TRAFFIC HEATMAP</h2>
+            <ExportButton
+              data={getFilteredData(
+                weeklyTrafficData,
+                heatmapStartDate,
+                heatmapEndDate,
+              )}
+              filename="weekly-traffic-heatmap"
+            />
+          </div>
           <DateFilterControl
             startDate={heatmapStartDate}
             setStartDate={setHeatmapStartDate}
@@ -1051,7 +1192,25 @@ const AnalyticsPage = () => {
 
         {/* Total Revenue */}
         <section className={styles.chartSection} style={{ marginTop: "2rem" }}>
-          <h2 className={styles.chartTitle}>TOTAL Revenue - daily</h2>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "1rem",
+              marginBottom: "1rem",
+            }}
+          >
+            <h2 className={styles.chartTitle}>TOTAL Revenue - daily</h2>
+            <ExportButton
+              data={getFilteredData(
+                queueData,
+                revenueStartDate,
+                revenueEndDate,
+              )}
+              filename="total-revenue-daily"
+            />
+          </div>
           <DateFilterControl
             startDate={revenueStartDate}
             setStartDate={setRevenueStartDate}
