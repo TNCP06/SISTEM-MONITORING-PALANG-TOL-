@@ -146,10 +146,33 @@ export function Dashboard() {
     else setTrafficLevel("SMOOTH");
   }, [vehiclesEntered, vehiclesExited]);
 
-  const handleGateControl = (gate: "ENTRY" | "EXIT", action: "OPEN" | "CLOSE") => {
+  const handleGateControl = async (gate: "ENTRY" | "EXIT", action: "OPEN" | "CLOSE") => {
     const status: GateStatus = action === "CLOSE" ? "CLOSED" : action;
     if (gate === "ENTRY") setEntryGateStatus(status);
     else setExitGateStatus(status);
+
+    // Send command to hardware via API
+    try {
+      const response = await fetch("/api/gate-control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gate, action }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        console.log("[Gate Control] Success:", data.message);
+      } else {
+        console.error("[Gate Control] Error:", data.error);
+        // Revert UI state on error
+        if (gate === "ENTRY") setEntryGateStatus(status === "CLOSED" ? "OPEN" : "CLOSED");
+        else setExitGateStatus(status === "CLOSED" ? "OPEN" : "CLOSED");
+      }
+    } catch (err) {
+      console.error("[Gate Control] Request failed:", err);
+      // Revert UI state on error
+      if (gate === "ENTRY") setEntryGateStatus(status === "CLOSED" ? "OPEN" : "CLOSED");
+      else setExitGateStatus(status === "CLOSED" ? "OPEN" : "CLOSED");
+    }
   };
 
   const getTrafficStatusClass = () => {
