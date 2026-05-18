@@ -26,10 +26,31 @@ type Transaction = {
   gate: "ENTRY" | "EXIT";
   biaya: number;
   keterangan: string;
+  timestamp: number;
 };
 
 const formatRupiah = (n: number) =>
   "Rp " + n.toLocaleString("id-ID");
+
+const deriveKeterangan = (item: any): string => {
+  if (item.status === "DITERIMA") return "Transaksi berhasil";
+
+  const alasan = item.keterangan || item.alasan || item.reason || item.keterangan_raw || "";
+  switch (String(alasan)) {
+    case "SALDO_TIDAK_CUKUP":
+      return item.saldo_sebelum !== undefined
+        ? `Saldo tidak mencukupi (saldo: Rp ${Number(item.saldo_sebelum).toLocaleString("id-ID")})`
+        : "Saldo tidak mencukupi";
+    case "KARTU_TIDAK_DIKENAL":
+      return "Kartu tidak terdaftar";
+    case "SUDAH_MASUK":
+      return "Sudah berada di dalam (keluar dulu)";
+    case "BELUM_MASUK":
+      return "Belum tercatat masuk";
+    default:
+      return alasan || "Tidak ada keterangan";
+  }
+};
 
 export function Dashboard() {
   const [entryGateStatus, setEntryGateStatus] = useState<GateStatus>("CLOSED");
@@ -45,10 +66,16 @@ export function Dashboard() {
   const [filterMonth, setFilterMonth] = useState(""); // "YYYY-MM" or ""
   const [filterStatus, setFilterStatus] = useState<"ALL" | "ACCEPTED" | "REJECTED">("ALL");
 
+  const getTransactionId = (item: any) => {
+    const timestamp = new Date(item.waktu).getTime();
+    const bucket = Math.floor(timestamp / 5000); // 5 second window to avoid hold duplicates
+    return `${item.uid}-${item.tipe_gate}-${bucket}`;
+  };
+
   const convertItem = (item: any): Transaction => {
     const dt = new Date(item.waktu);
     return {
-      id: `${item.uid}-${item.waktu}-${Math.random()}`,
+      id: getTransactionId(item),
       cardId: item.uid,
       date: dt.toISOString().split("T")[0],
       time: dt.toLocaleTimeString("id-ID", { hour12: false }),
@@ -56,7 +83,8 @@ export function Dashboard() {
       status: item.status === "DITERIMA" ? "ACCEPTED" : "REJECTED",
       gate: item.tipe_gate === "MASUK" ? "ENTRY" : "EXIT",
       biaya: Number(item.biaya) || 0,
-      keterangan: item.keterangan || "",
+      keterangan: item.keterangan || deriveKeterangan(item),
+      timestamp: dt.getTime(),
     };
   };
 
@@ -109,7 +137,42 @@ export function Dashboard() {
         try {
           const data = JSON.parse(e.data);
           const newTx = convertItem(data);
-          setTransactions((prev) => [newTx, ...prev].slice(0, 200));
+          setTransactions((prev) => {
+            const existingIndex = prev.findIndex((tx) => tx.id === newTx.id);
+            if (existingIndex >= 0) {
+              const existing = prev[existingIndex];
+              const merged = {
+                ...existing,
+                ...newTx,
+                keterangan:
+                  existing.keterangan && existing.keterangan !== "Tidak ada keterangan" && existing.keterangan !== "-"
+                    ? existing.keterangan
+                    : newTx.keterangan,
+              };
+              return [merged, ...prev.filter((_, i) => i !== existingIndex)].slice(0, 200);
+            }
+
+            const duplicateIndex = prev.findIndex((tx) =>
+              tx.cardId === newTx.cardId &&
+              tx.gate === newTx.gate &&
+              Math.abs(tx.timestamp - newTx.timestamp) < 5000,
+            );
+            if (duplicateIndex >= 0) {
+              const existing = prev[duplicateIndex];
+              const merged = {
+                ...existing,
+                ...newTx,
+                keterangan:
+                  existing.keterangan && existing.keterangan !== "Tidak ada keterangan" && existing.keterangan !== "-"
+                    ? existing.keterangan
+                    : newTx.keterangan,
+              };
+              return [merged, ...prev.filter((_, i) => i !== duplicateIndex)].slice(0, 200);
+            }
+
+            return [newTx, ...prev].slice(0, 200);
+          });
+
           if (data.status === "DITERIMA") {
             if (data.tipe_gate === "MASUK") {
               setEntryGateStatus("OPEN");

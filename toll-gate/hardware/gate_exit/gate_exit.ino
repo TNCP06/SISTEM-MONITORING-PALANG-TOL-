@@ -20,18 +20,16 @@ const int   daylightOffset_sec = 0;
 
 #define TIPE_GATE "KELUAR"  // << Ganti "MASUK" atau "KELUAR" sesuai gate
 
-// ================= PIN (dari TestShitOut) =================
-#define SERVO_PIN  4     // SG90 di D4
-#define TRIG_PIN   13    // Ultrasonik Trig
-#define ECHO_PIN   12    // Ultrasonik Echo
-#define BUZZER     21    // Active Buzzer
-#define SS_PIN     5     // RFID SDA
-#define RST_PIN    22    // RFID RST
-
-// LED RGB Common Cathode (dari TestShitOut)
-const int redPin   = 32;
+// ================= PIN  =================
+#define SERVO_PIN 4      // SG90 di D4
+#define TRIG_PIN 13      // Ultrasonik Trig
+#define ECHO_PIN 12      // Ultrasonik Echo
+#define BUZZER 21        // BUZZER +
+#define SS_PIN 5         // RFID SDA
+#define RST_PIN 22       // RFID RST
+const int redPin = 32;
 const int greenPin = 33;
-const int bluePin  = 27;
+const int bluePin = 27;
 
 // ================= OBJEK =================
 WiFiClientSecure espClient;
@@ -279,7 +277,7 @@ void tutupPalang() { palang.write(0);  Serial.println("[SERVO] Tutup"); }
 void tungguMobilLewat() {
   bool terdeteksi = false;
   unsigned long start = millis();
-  while (millis() - start < 10000) {  // max 10 detik (dari TestShitOut)
+  while (millis() - start < 10000) {
     client.loop();
     int jarak = bacaJarak();
     if (jarak > 0 && jarak < 15) terdeteksi = true;
@@ -297,7 +295,6 @@ void bacaRFID() {
   if (!rfid.PICC_IsNewCardPresent()) return;
   if (!rfid.PICC_ReadCardSerial()) return;
 
-  // Jika masih menunggu response sebelumnya, abaikan
   if (menungguResponse) {
     Serial.println("[RFID] Masih menunggu response server...");
     rfid.PICC_HaltA();
@@ -312,8 +309,6 @@ void bacaRFID() {
   }
   uid.toUpperCase();
   Serial.println("[RFID] UID: " + uid);
-
-  // Ambil jarak terbaru saat kartu di-tap
   jarakTerakhir = bacaJarak();
 
   // Cek jarak kendaraan
@@ -339,7 +334,7 @@ void bacaRFID() {
   uidMenunggu      = uid;
   waktuKirim       = millis();
 
-  nyalakanWarna(0, 0, 255); // Biru "Memproses"
+  nyalakanWarna(0, 0, 255);
   tampilLCD("Memproses...", uid);
 
   rfid.PICC_HaltA();
@@ -363,12 +358,10 @@ void setup() {
   pinMode(bluePin,  OUTPUT);
   pinMode(BUZZER,   OUTPUT);
 
-  // Setup Servo SG90 (dari TestShitOut: setPeriodHertz + attach dengan pulse range)
   palang.setPeriodHertz(50);
   palang.attach(SERVO_PIN, 500, 2400);
   tutupPalang();
 
-  // Setup I2C LCD dengan pin custom (SDA=26, SCL=25) dari TestShitOut
   Wire.begin(26, 25);
   lcd.init();
   lcd.backlight();
@@ -376,7 +369,7 @@ void setup() {
   SPI.begin();
   rfid.PCD_Init();
 
-  nyalakanWarna(0, 0, 255); // Standby = Biru
+  nyalakanWarna(0, 0, 255);
   tampilanStandby();
 
   Serial.println("[SETUP] Gate " + String(TIPE_GATE) + " Siap!");
@@ -387,7 +380,6 @@ void loop() {
   if (WiFi.status() == WL_CONNECTED && !client.connected()) connectMQTT();
   client.loop();
 
-  // Auto-Recovery RFID (dari TestShitOut: mencegah mati karena kabel kendor)
   if (millis() - waktuTerakhir > 1000) {
     jarakTerakhir = bacaJarak();
     byte versi = rfid.PCD_ReadRegister(rfid.VersionReg);
@@ -399,7 +391,6 @@ void loop() {
     waktuTerakhir = millis();
   }
 
-  // Cek timeout response dari server
   if (menungguResponse && millis() - waktuKirim > TIMEOUT_MS) {
     Serial.println("[TIMEOUT] Tidak ada response dari server");
     menungguResponse = false;

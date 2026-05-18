@@ -18,15 +18,13 @@ const char* ntpServer          = "pool.ntp.org";
 const long  gmtOffset_sec      = 25200;  // UTC+7 WIB
 const int   daylightOffset_sec = 0;
 
-// ================= PIN (dari TestShitOut) =================
+// ================= PIN =================
 #define SERVO_PIN  4     // SG90 di D4
 #define TRIG_PIN   13    // Ultrasonik Trig
 #define ECHO_PIN   12    // Ultrasonik Echo
 #define BUZZER     21    // Active Buzzer
 #define SS_PIN     5     // RFID SDA
 #define RST_PIN    22    // RFID RST
-
-// LED RGB Common Cathode (dari TestShitOut)
 const int redPin   = 32;
 const int greenPin = 33;
 const int bluePin  = 27;
@@ -371,12 +369,10 @@ void setup() {
   pinMode(bluePin,  OUTPUT);
   pinMode(BUZZER,   OUTPUT);
 
-  // Setup Servo SG90 (dari TestShitOut: setPeriodHertz + attach dengan pulse range)
   palang.setPeriodHertz(50);
   palang.attach(SERVO_PIN, 500, 2400);
   tutupPalang();
 
-  // Setup I2C LCD dengan pin custom (SDA=26, SCL=25) dari TestShitOut
   Wire.begin(26, 25);
   lcd.init();
   lcd.backlight();
@@ -395,7 +391,6 @@ void loop() {
   if (WiFi.status() == WL_CONNECTED && !client.connected()) connectMQTT();
   client.loop();
 
-  // Auto-Recovery RFID (dari TestShitOut)
   if (millis() - waktuTerakhir > 1000) {
     jarakTerakhir = bacaJarak();
     byte versi = rfid.PCD_ReadRegister(rfid.VersionReg);
@@ -407,7 +402,6 @@ void loop() {
     waktuTerakhir = millis();
   }
 
-  // Timeout response server
   if (menungguResponse && millis() - waktuKirim > TIMEOUT_MS) {
     Serial.println("[TIMEOUT] Tidak ada response dari server");
     menungguResponse = false;

@@ -19,10 +19,34 @@ const DEFAULT_TOLL_FEE = 100000;
  */
 function deriveKeterangan(item: any, tollFee: number): string {
   if (item.status === "DITERIMA") return "Transaksi berhasil";
+
+  const alasan = item.alasan || item.reason || item.keterangan_raw || null;
+
+  if (alasan) {
+    switch (String(alasan)) {
+      case "SALDO_TIDAK_CUKUP":
+        if (item.saldo_sebelum !== undefined) {
+          return `Saldo tidak mencukupi (saldo: Rp ${Number(item.saldo_sebelum).toLocaleString("id-ID")})`;
+        }
+        return "Saldo tidak mencukupi";
+      case "KARTU_TIDAK_DIKENAL":
+        return "Kartu tidak terdaftar";
+      case "SUDAH_MASUK":
+        return "Masih berada di dalam";
+      case "BELUM_MASUK":
+        return "Belum tercatat masuk";
+      default:
+        // If the field is already a human message, return it
+        return String(alasan);
+    }
+  }
+
+  // Fallback: check numeric balance condition
   if (item.saldo_sebelum !== undefined && item.saldo_sebelum < tollFee) {
     return `Saldo tidak mencukupi (saldo: Rp ${Number(item.saldo_sebelum).toLocaleString("id-ID")})`;
   }
-  return item.keterangan_raw || "Kartu tidak terdaftar";
+
+  return item.keterangan || "Kartu tidak terdaftar";
 }
 
 export async function GET() {
