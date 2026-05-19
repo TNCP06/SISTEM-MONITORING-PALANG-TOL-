@@ -148,9 +148,9 @@ void responDiterima(JsonDocument& doc) {
   buzzerOK();
 
   tampilLCD("Selamat Datang!", nama);
-  delay(1000);
+  delay(250);
   tampilLCD("Saldo:", "Rp " + String(saldo));
-  delay(1000);
+  delay(250);
 
   bukaPalang();
   tungguMobilLewat();
@@ -289,8 +289,8 @@ void tungguMobilLewat() {
   while (millis() - start < 10000) {  // max 10 detik
     client.loop();
     int jarak = bacaJarak();
-    if (jarak > 0 && jarak < 15) terdeteksi = true;
-    if (terdeteksi && jarak > 20) {
+    if (jarak > 0 && jarak < 13) terdeteksi = true;
+    if (terdeteksi && jarak > 12) {
       Serial.println("[SENSOR] Mobil lewat");
       break;
     }

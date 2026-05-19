@@ -185,6 +185,10 @@ export function Dashboard() {
               setVehiclesExited((p) => p + 1);
             }
           }
+
+          setTimeout(() => {
+            fetchInitialData();
+          }, 1000);
         } catch (err) { console.error("[WS] Parse error:", err); }
       };
       ws.onclose = () => {
