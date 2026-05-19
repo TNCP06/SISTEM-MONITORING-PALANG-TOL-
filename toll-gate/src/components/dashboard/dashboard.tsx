@@ -987,34 +987,14 @@ export function Dashboard() {
         </div>
 
         {/* Pagination Controls */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginTop: "1rem",
-            flexWrap: "wrap",
-            gap: "0.75rem",
-          }}
-        >
+        <div className={styles.paginationBar}>
           {/* Rows per page */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>
-              Baris per halaman:
-            </span>
+          <div className={styles.paginationGroup}>
+            <span className={styles.paginationLabel}>Baris per halaman:</span>
             <select
               value={rowsPerPage}
               onChange={(e) => setRowsPerPage(Number(e.target.value))}
-              style={{
-                background: "var(--input-bg-soft)",
-                border: "1px solid var(--input-border-strong)",
-                borderRadius: 6,
-                color: "var(--text-main)",
-                fontSize: "0.78rem",
-                padding: "4px 8px",
-                outline: "none",
-                cursor: "pointer",
-              }}
+              className={styles.paginationSelect}
             >
               {[10, 25, 50, 100].map((n) => (
                 <option
@@ -1032,8 +1012,8 @@ export function Dashboard() {
           </div>
 
           {/* Page info + navigation */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>
+          <div className={styles.paginationNav}>
+            <span className={styles.paginationRange}>
               {filteredTransactions.length === 0
                 ? "0 data"
                 : `${(currentPage - 1) * rowsPerPage + 1}–${Math.min(currentPage * rowsPerPage, filteredTransactions.length)} dari ${filteredTransactions.length}`}
@@ -1041,48 +1021,17 @@ export function Dashboard() {
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              style={{
-                background: "var(--input-bg-soft)",
-                border: "1px solid var(--input-border-strong)",
-                borderRadius: 6,
-                color:
-                  currentPage === 1
-                    ? "var(--text-faint)"
-                    : "var(--text-subtle)",
-                padding: "4px 8px",
-                cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-              }}
+              className={styles.paginationButton}
             >
               <ChevronLeft size={16} />
             </button>
-            <span
-              style={{
-                color: "var(--text-subtle)",
-                fontSize: "0.78rem",
-                minWidth: "60px",
-                textAlign: "center",
-              }}
-            >
+            <span className={styles.paginationInfo}>
               {currentPage} / {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              style={{
-                background: "var(--input-bg-soft)",
-                border: "1px solid var(--input-border-strong)",
-                borderRadius: 6,
-                color:
-                  currentPage === totalPages
-                    ? "var(--text-faint)"
-                    : "var(--text-subtle)",
-                padding: "4px 8px",
-                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-              }}
+              className={styles.paginationButton}
             >
               <ChevronRight size={16} />
             </button>
