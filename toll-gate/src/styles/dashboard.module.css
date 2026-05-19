@@ -328,6 +328,28 @@
   text-transform: uppercase;
 }
 
+.tableScrollContainer {
+  overflow-x: auto;
+}
+
+.tableScrollContainer::-webkit-scrollbar {
+  height: 5px;
+}
+
+.tableScrollContainer::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 3px;
+}
+
+.tableScrollContainer::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4);
+  border-radius: 3px;
+}
+
+.tableScrollContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7);
+}
+
 .transactionTable {
   width: 100%;
   border-collapse: collapse;

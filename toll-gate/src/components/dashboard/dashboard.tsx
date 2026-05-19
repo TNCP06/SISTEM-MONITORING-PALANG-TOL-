@@ -262,9 +262,13 @@ export function Dashboard() {
   };
 
   const availableMonths = useMemo(() => {
-    const months = Array.from(new Set(transactions.map((t) => t.month))).sort(
-      (a, b) => b.localeCompare(a),
-    );
+    const months = Array.from(
+      new Set(
+        transactions
+          .map((t) => t.month)
+          .filter((m) => /^\d{4}-\d{2}$/.test(m))
+      )
+    ).sort((a, b) => b.localeCompare(a));
     return months;
   }, [transactions]);
 
@@ -277,8 +281,8 @@ export function Dashboard() {
     });
   }, [transactions, searchCard, filterMonth, filterStatus]);
 
-  // Reset ke halaman 1 saat filter atau jumlah baris berubah
-  useEffect(() => { setCurrentPage(1); }, [searchCard, filterMonth, filterStatus, rowsPerPage]);
+  // Reset ke halaman 1 saat jumlah baris berubah
+  useEffect(() => { setCurrentPage(1); }, [rowsPerPage]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / rowsPerPage));
   const paginatedTransactions = filteredTransactions.slice(
@@ -496,7 +500,7 @@ export function Dashboard() {
               type="text"
               placeholder="Search by Card ID..."
               value={searchCard}
-              onChange={(e) => setSearchCard(e.target.value)}
+              onChange={(e) => { setSearchCard(e.target.value); setCurrentPage(1); }}
               style={{
                 width: "100%",
                 padding: "8px 10px 8px 32px",
@@ -519,7 +523,7 @@ export function Dashboard() {
             }} />
             <select
               value={filterMonth}
-              onChange={(e) => setFilterMonth(e.target.value)}
+              onChange={(e) => { setFilterMonth(e.target.value); setCurrentPage(1); }}
               style={{ ...dropdownStyle, color: filterMonth ? "#e2e8f0" : "#64748b" }}
             >
               <option value="">Semua Bulan</option>
@@ -539,7 +543,7 @@ export function Dashboard() {
             }} />
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as "ALL" | "ACCEPTED" | "REJECTED")}
+              onChange={(e) => { setFilterStatus(e.target.value as "ALL" | "ACCEPTED" | "REJECTED"); setCurrentPage(1); }}
               style={{
                 ...dropdownStyle,
                 color: filterStatus === "ACCEPTED" ? "#10b981" : filterStatus === "REJECTED" ? "#ec4899" : "#64748b",
@@ -585,7 +589,7 @@ export function Dashboard() {
         </div>
 
         {/* Table */}
-        <div style={{ overflowX: "auto" }}>
+        <div className={styles.tableScrollContainer}>
           <table className={styles.transactionTable} style={{ tableLayout: "fixed" }}>
             <colgroup>
               <col style={{ width: "155px" }} />
