@@ -1,7 +1,7 @@
 .container {
   min-height: 100vh;
-  background-color: #0b1426;
-  color: #f8fafc;
+  background-color: var(--bg-main);
+  color: var(--text-main);
 }
 
 .mainContent {
@@ -15,14 +15,14 @@
 .title {
   font-size: 2rem;
   font-weight: 800;
-  color: white;
+  color: var(--text-strong);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   margin: 0;
 }
 
 .subtitle {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.95rem;
   margin-top: 0.5rem;
 }
@@ -35,8 +35,8 @@
 }
 
 .statCard {
-  background: #0f172a;
-  border: 1px solid #1e293b;
+  background: var(--surface-1);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 1.5rem;
 }
@@ -45,7 +45,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -59,8 +59,8 @@
 }
 
 .sectionCard {
-  background: #0f172a;
-  border: 1px solid #1e293b;
+  background: var(--surface-1);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 2.5rem;
@@ -69,7 +69,7 @@
 .sectionTitle {
   font-size: 1rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-strong);
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 1.5rem;
@@ -97,8 +97,8 @@
 }
 
 .btnCyan {
-  border: 1px solid #00d4ff;
-  color: #00d4ff;
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
 }
 
 .btnCyan:hover {
@@ -106,8 +106,8 @@
 }
 
 .btnGreen {
-  border: 1px solid #10b981;
-  color: #10b981;
+  border: 1px solid var(--accent-green);
+  color: var(--accent-green);
 }
 
 .btnGreen:hover {
@@ -116,7 +116,7 @@
 
 .btnDesc {
   margin-top: 1rem;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.75rem;
 }
 
@@ -128,8 +128,8 @@
 }
 
 .addBtn {
-  background: #10b981;
-  color: #0b1426;
+  background: var(--accent-green);
+  color: var(--accent-cyan-contrast);
   border: none;
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
@@ -149,11 +149,11 @@
 
 .searchInput {
   width: 100%;
-  background: #0b1426;
-  border: 1px solid #1e293b;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 5px;
   padding: 0.8rem 1rem;
-  color: white;
+  color: var(--text-main);
   font-size: 0.9rem;
   box-sizing: border-box;
   height: 45px;
@@ -166,7 +166,7 @@
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #475569;
+  color: var(--text-faint);
 }
 
 .tableContainer {
@@ -175,17 +175,17 @@
 }
 
 .tableHeader {
-  color: #475569;
+  color: var(--text-faint);
   font-size: 0.7rem;
   text-transform: uppercase;
   text-align: left;
   letter-spacing: 1px;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .row {
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .cell {
@@ -194,7 +194,7 @@
 }
 
 .uid {
-  color: #00d4ff;
+  color: var(--accent-cyan);
   font-weight: 600;
 }
 
@@ -202,7 +202,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .statusBadge {
@@ -214,18 +214,18 @@
 
 .activeBadge {
   background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  color: var(--accent-green);
 }
 
 .inactiveBadge {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--accent-red);
 }
 
 .deleteBtn {
   background: transparent;
   border: none;
-  color: #ef4444;
+  color: var(--accent-red);
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 4px;
@@ -240,22 +240,22 @@
 }
 
 .textCyan {
-  color: #00d4ff;
+  color: var(--accent-cyan);
 }
 
 .textGreen {
-  color: #10b981;
+  color: var(--accent-green);
 }
 
 .textRed {
-  color: #ef4444;
+  color: var(--accent-red);
 }
 
 .dateCell {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #94a3b8;
+  color: var(--text-subtle);
 }
 
 .statusBadge {
@@ -268,20 +268,20 @@
 
 .activeBadge {
   background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  color: var(--accent-green);
   border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .inactiveBadge {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--accent-red);
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .deleteBtn {
   background: none;
   border: none;
-  color: #ef4444;
+  color: var(--accent-red);
   opacity: 0.5;
   cursor: pointer;
   transition: 0.2s;
@@ -292,11 +292,11 @@
 }
 
 .textCyan {
-  color: #00d4ff;
+  color: var(--accent-cyan);
 }
 .textGreen {
-  color: #10b981;
+  color: var(--accent-green);
 }
 .textRed {
-  color: #ef4444;
+  color: var(--accent-red);
 }

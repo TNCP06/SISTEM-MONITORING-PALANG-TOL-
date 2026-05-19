@@ -33,13 +33,13 @@ type Transaction = {
   timestamp: number;
 };
 
-const formatRupiah = (n: number) =>
-  "Rp " + n.toLocaleString("id-ID");
+const formatRupiah = (n: number) => "Rp " + n.toLocaleString("id-ID");
 
 const deriveKeterangan = (item: any): string => {
   if (item.status === "DITERIMA") return "Transaksi berhasil";
 
-  const alasan = item.keterangan || item.alasan || item.reason || item.keterangan_raw || "";
+  const alasan =
+    item.keterangan || item.alasan || item.reason || item.keterangan_raw || "";
   switch (String(alasan)) {
     case "SALDO_TIDAK_CUKUP":
       return item.saldo_sebelum !== undefined
@@ -68,7 +68,9 @@ export function Dashboard() {
   // ---- Filter state ----
   const [searchCard, setSearchCard] = useState("");
   const [filterMonth, setFilterMonth] = useState(""); // "YYYY-MM" or ""
-  const [filterStatus, setFilterStatus] = useState<"ALL" | "ACCEPTED" | "REJECTED">("ALL");
+  const [filterStatus, setFilterStatus] = useState<
+    "ALL" | "ACCEPTED" | "REJECTED"
+  >("ALL");
 
   // ---- Pagination state ----
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -86,13 +88,14 @@ export function Dashboard() {
       id: getTransactionId(item),
       cardId: item.uid,
       nama: item.nama || "",
-      date: waktuStr.slice(0, 10),   // "YYYY-MM-DD" langsung dari string, hindari UTC offset
-      time: waktuStr.slice(11, 19),  // "HH:MM:SS"
-      month: waktuStr.slice(0, 7),   // "YYYY-MM"
+      date: waktuStr.slice(0, 10), // "YYYY-MM-DD" langsung dari string, hindari UTC offset
+      time: waktuStr.slice(11, 19), // "HH:MM:SS"
+      month: waktuStr.slice(0, 7), // "YYYY-MM"
       status: item.status === "DITERIMA" ? "ACCEPTED" : "REJECTED",
       gate: item.tipe_gate === "MASUK" ? "ENTRY" : "EXIT",
       biaya: Number(item.biaya) || 0,
-      saldo_sesudah: item.saldo_sesudah != null ? Number(item.saldo_sesudah) : null,
+      saldo_sesudah:
+        item.saldo_sesudah != null ? Number(item.saldo_sesudah) : null,
       keterangan: item.keterangan || deriveKeterangan(item),
       timestamp: new Date(waktuStr).getTime(),
     };
@@ -102,7 +105,10 @@ export function Dashboard() {
     try {
       const res = await fetch("/api/events");
       const data = await res.json();
-      if (data.error) { console.error("API Error:", data.error); return; }
+      if (data.error) {
+        console.error("API Error:", data.error);
+        return;
+      }
 
       if (data.stats) {
         setVehiclesEntered(data.stats.total_masuk || 0);
@@ -114,7 +120,7 @@ export function Dashboard() {
         const sorted = data.transactions
           .map(convertItem)
           .sort((a: Transaction, b: Transaction) =>
-            `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`)
+            `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`),
           );
         setTransactions(sorted);
       }
@@ -136,13 +142,22 @@ export function Dashboard() {
       pollingId = window.setInterval(fetchInitialData, 5000);
     };
     const stopPolling = () => {
-      if (pollingId !== null) { window.clearInterval(pollingId); pollingId = null; }
+      if (pollingId !== null) {
+        window.clearInterval(pollingId);
+        pollingId = null;
+      }
     };
 
     const createWebSocket = () => {
-      if (!wsUrl) { startPolling(); return; }
+      if (!wsUrl) {
+        startPolling();
+        return;
+      }
       ws = new WebSocket(wsUrl);
-      ws.onopen = () => { console.log("[WS] Connected"); stopPolling(); };
+      ws.onopen = () => {
+        console.log("[WS] Connected");
+        stopPolling();
+      };
       ws.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
@@ -155,17 +170,23 @@ export function Dashboard() {
                 ...existing,
                 ...newTx,
                 keterangan:
-                  existing.keterangan && existing.keterangan !== "Tidak ada keterangan" && existing.keterangan !== "-"
+                  existing.keterangan &&
+                  existing.keterangan !== "Tidak ada keterangan" &&
+                  existing.keterangan !== "-"
                     ? existing.keterangan
                     : newTx.keterangan,
               };
-              return [merged, ...prev.filter((_, i) => i !== existingIndex)].slice(0, 200);
+              return [
+                merged,
+                ...prev.filter((_, i) => i !== existingIndex),
+              ].slice(0, 200);
             }
 
-            const duplicateIndex = prev.findIndex((tx) =>
-              tx.cardId === newTx.cardId &&
-              tx.gate === newTx.gate &&
-              Math.abs(tx.timestamp - newTx.timestamp) < 5000,
+            const duplicateIndex = prev.findIndex(
+              (tx) =>
+                tx.cardId === newTx.cardId &&
+                tx.gate === newTx.gate &&
+                Math.abs(tx.timestamp - newTx.timestamp) < 5000,
             );
             if (duplicateIndex >= 0) {
               const existing = prev[duplicateIndex];
@@ -173,11 +194,16 @@ export function Dashboard() {
                 ...existing,
                 ...newTx,
                 keterangan:
-                  existing.keterangan && existing.keterangan !== "Tidak ada keterangan" && existing.keterangan !== "-"
+                  existing.keterangan &&
+                  existing.keterangan !== "Tidak ada keterangan" &&
+                  existing.keterangan !== "-"
                     ? existing.keterangan
                     : newTx.keterangan,
               };
-              return [merged, ...prev.filter((_, i) => i !== duplicateIndex)].slice(0, 200);
+              return [
+                merged,
+                ...prev.filter((_, i) => i !== duplicateIndex),
+              ].slice(0, 200);
             }
 
             return [newTx, ...prev].slice(0, 200);
@@ -200,13 +226,18 @@ export function Dashboard() {
           setTimeout(() => {
             fetchInitialData();
           }, 1000);
-        } catch (err) { console.error("[WS] Parse error:", err); }
+        } catch (err) {
+          console.error("[WS] Parse error:", err);
+        }
       };
       ws.onclose = () => {
-        ws = null; startPolling();
+        ws = null;
+        startPolling();
         reconnectId = window.setTimeout(createWebSocket, 5000);
       };
-      ws.onerror = () => { if (ws?.readyState !== WebSocket.OPEN) startPolling(); };
+      ws.onerror = () => {
+        if (ws?.readyState !== WebSocket.OPEN) startPolling();
+      };
     };
 
     createWebSocket();
@@ -224,7 +255,10 @@ export function Dashboard() {
     else setTrafficLevel("SMOOTH");
   }, [vehiclesEntered, vehiclesExited]);
 
-  const handleGateControl = async (gate: "ENTRY" | "EXIT", action: "OPEN" | "CLOSE") => {
+  const handleGateControl = async (
+    gate: "ENTRY" | "EXIT",
+    action: "OPEN" | "CLOSE",
+  ) => {
     const status: GateStatus = action === "CLOSE" ? "CLOSED" : action;
     if (gate === "ENTRY") setEntryGateStatus(status);
     else setExitGateStatus(status);
@@ -242,39 +276,46 @@ export function Dashboard() {
       } else {
         console.error("[Gate Control] Error:", data.error);
         // Revert UI state on error
-        if (gate === "ENTRY") setEntryGateStatus(status === "CLOSED" ? "OPEN" : "CLOSED");
+        if (gate === "ENTRY")
+          setEntryGateStatus(status === "CLOSED" ? "OPEN" : "CLOSED");
         else setExitGateStatus(status === "CLOSED" ? "OPEN" : "CLOSED");
       }
     } catch (err) {
       console.error("[Gate Control] Request failed:", err);
       // Revert UI state on error
-      if (gate === "ENTRY") setEntryGateStatus(status === "CLOSED" ? "OPEN" : "CLOSED");
+      if (gate === "ENTRY")
+        setEntryGateStatus(status === "CLOSED" ? "OPEN" : "CLOSED");
       else setExitGateStatus(status === "CLOSED" ? "OPEN" : "CLOSED");
     }
   };
 
   const getTrafficStatusClass = () => {
     switch (trafficLevel) {
-      case "SMOOTH": return styles.trafficSmooth;
-      case "MODERATE": return styles.trafficModerate;
-      case "CONGESTED": return styles.trafficCongested;
+      case "SMOOTH":
+        return styles.trafficSmooth;
+      case "MODERATE":
+        return styles.trafficModerate;
+      case "CONGESTED":
+        return styles.trafficCongested;
     }
   };
 
   const availableMonths = useMemo(() => {
     const months = Array.from(
       new Set(
-        transactions
-          .map((t) => t.month)
-          .filter((m) => /^\d{4}-\d{2}$/.test(m))
-      )
+        transactions.map((t) => t.month).filter((m) => /^\d{4}-\d{2}$/.test(m)),
+      ),
     ).sort((a, b) => b.localeCompare(a));
     return months;
   }, [transactions]);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((t) => {
-      if (searchCard && !t.cardId.toLowerCase().includes(searchCard.toLowerCase())) return false;
+      if (
+        searchCard &&
+        !t.cardId.toLowerCase().includes(searchCard.toLowerCase())
+      )
+        return false;
       if (filterMonth && t.month !== filterMonth) return false;
       if (filterStatus !== "ALL" && t.status !== filterStatus) return false;
       return true;
@@ -282,16 +323,34 @@ export function Dashboard() {
   }, [transactions, searchCard, filterMonth, filterStatus]);
 
   // Reset ke halaman 1 saat jumlah baris berubah
-  useEffect(() => { setCurrentPage(1); }, [rowsPerPage]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [rowsPerPage]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / rowsPerPage));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredTransactions.length / rowsPerPage),
+  );
   const paginatedTransactions = filteredTransactions.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage,
   );
 
   const formatMonth = (m: string) => {
-    const names = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    const names = [
+      "Januari",
+      "Februari",
+      "Maret",
+      "April",
+      "Mei",
+      "Juni",
+      "Juli",
+      "Agustus",
+      "September",
+      "Oktober",
+      "November",
+      "Desember",
+    ];
     const parts = m.split("-");
     return `${names[parseInt(parts[1], 10) - 1]} ${parts[0]}`;
   };
@@ -339,10 +398,10 @@ export function Dashboard() {
   const dropdownStyle: React.CSSProperties = {
     width: "100%",
     padding: "7px 10px 7px 32px",
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.1)",
+    background: "var(--input-bg-soft)",
+    border: "1px solid var(--input-border-strong)",
     borderRadius: 6,
-    color: "#e2e8f0",
+    color: "var(--text-main)",
     fontSize: "0.78rem",
     outline: "none",
     boxSizing: "border-box",
@@ -368,31 +427,40 @@ export function Dashboard() {
       <div className={styles.statsGrid}>
         <div className={styles.statCard}>
           <div className={styles.statHeader}>
-            <ArrowRight size={16} style={{ color: "#00d4ff" }} />
+            <ArrowRight size={16} style={{ color: "var(--accent-cyan)" }} />
             <span>VEHICLES ENTERED</span>
           </div>
-          <p className={`${styles.statValue} ${styles.textCyan}`}>{vehiclesEntered}</p>
+          <p className={`${styles.statValue} ${styles.textCyan}`}>
+            {vehiclesEntered}
+          </p>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statHeader}>
-            <ArrowLeft size={16} style={{ color: "#ec4899" }} />
+            <ArrowLeft size={16} style={{ color: "var(--accent-magenta)" }} />
             <span>VEHICLES EXITED</span>
           </div>
-          <p className={`${styles.statValue} ${styles.textMagenta}`}>{vehiclesExited}</p>
+          <p className={`${styles.statValue} ${styles.textMagenta}`}>
+            {vehiclesExited}
+          </p>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statHeader}>
-            <Car size={16} style={{ color: "#10b981" }} />
+            <Car size={16} style={{ color: "var(--accent-green)" }} />
             <span>CURRENTLY INSIDE</span>
           </div>
-          <p className={`${styles.statValue} ${styles.textGreen}`}>{vehiclesEntered - vehiclesExited}</p>
+          <p className={`${styles.statValue} ${styles.textGreen}`}>
+            {vehiclesEntered - vehiclesExited}
+          </p>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statHeader}>
-            <Wallet size={16} style={{ color: "#f59e0b" }} />
+            <Wallet size={16} style={{ color: "var(--accent-yellow)" }} />
             <span>TOTAL REVENUE</span>
           </div>
-          <p className={`${styles.statValue} ${styles.textYellow}`} style={{ fontSize: "1.1rem" }}>
+          <p
+            className={`${styles.statValue} ${styles.textYellow}`}
+            style={{ fontSize: "1.1rem" }}
+          >
             {formatRupiah(totalRevenue)}
           </p>
         </div>
@@ -403,34 +471,65 @@ export function Dashboard() {
         {/* Entry Gate */}
         <div className={styles.gateCard}>
           <div className={styles.gateHeader}>
-            <h3 className={styles.gateTitle} style={{ color: "#00d4ff" }}>ENTRY GATE</h3>
+            <h3
+              className={styles.gateTitle}
+              style={{ color: "var(--accent-cyan)" }}
+            >
+              ENTRY GATE
+            </h3>
           </div>
           <div className={styles.gateContent}>
             <div className={styles.gateStatus}>
               <div className={styles.gateStatusLeft}>
                 {entryGateStatus === "OPEN" ? (
-                  <DoorOpen size={40} style={{ color: "#00d4ff" }} strokeWidth={1} />
+                  <DoorOpen
+                    size={40}
+                    style={{ color: "var(--accent-cyan)" }}
+                    strokeWidth={1}
+                  />
                 ) : (
-                  <DoorClosed size={40} style={{ color: "#64748b" }} strokeWidth={1} />
+                  <DoorClosed
+                    size={40}
+                    style={{ color: "var(--text-muted)" }}
+                    strokeWidth={1}
+                  />
                 )}
                 <div>
                   <p className={styles.gateStatusLabel}>STATUS</p>
-                  <p className={styles.gateStatusValue} style={{ color: entryGateStatus === "OPEN" ? "#00d4ff" : "#64748b" }}>
+                  <p
+                    className={styles.gateStatusValue}
+                    style={{
+                      color:
+                        entryGateStatus === "OPEN"
+                          ? "var(--accent-cyan)"
+                          : "var(--text-muted)",
+                    }}
+                  >
                     {entryGateStatus}
                   </p>
                 </div>
               </div>
-              <div className={`${styles.gateIndicator} ${entryGateStatus === "OPEN" ? styles.gateIndicatorActive : ""}`}>
-                <div className={`${styles.gateIndicatorDot} ${entryGateStatus === "OPEN" ? styles.gateIndicatorDotActive : ""}`} />
+              <div
+                className={`${styles.gateIndicator} ${entryGateStatus === "OPEN" ? styles.gateIndicatorActive : ""}`}
+              >
+                <div
+                  className={`${styles.gateIndicatorDot} ${entryGateStatus === "OPEN" ? styles.gateIndicatorDotActive : ""}`}
+                />
               </div>
             </div>
             <div className={styles.gateButtons}>
-              <button onClick={() => handleGateControl("ENTRY", "OPEN")} disabled={entryGateStatus === "OPEN"}
-                className={`${styles.gateBtn} ${styles.gateBtnOpen} ${entryGateStatus === "OPEN" ? styles.gateBtnDisabled : ""}`}>
+              <button
+                onClick={() => handleGateControl("ENTRY", "OPEN")}
+                disabled={entryGateStatus === "OPEN"}
+                className={`${styles.gateBtn} ${styles.gateBtnOpen} ${entryGateStatus === "OPEN" ? styles.gateBtnDisabled : ""}`}
+              >
                 OPEN GATE
               </button>
-              <button onClick={() => handleGateControl("ENTRY", "CLOSE")} disabled={entryGateStatus === "CLOSED"}
-                className={`${styles.gateBtn} ${styles.gateBtnClose} ${entryGateStatus === "CLOSED" ? styles.gateBtnDisabled : ""}`}>
+              <button
+                onClick={() => handleGateControl("ENTRY", "CLOSE")}
+                disabled={entryGateStatus === "CLOSED"}
+                className={`${styles.gateBtn} ${styles.gateBtnClose} ${entryGateStatus === "CLOSED" ? styles.gateBtnDisabled : ""}`}
+              >
                 CLOSE GATE
               </button>
             </div>
@@ -440,36 +539,77 @@ export function Dashboard() {
         {/* Exit Gate */}
         <div className={styles.gateCard}>
           <div className={styles.gateHeader}>
-            <h3 className={styles.gateTitle} style={{ color: "#ec4899" }}>EXIT GATE</h3>
+            <h3
+              className={styles.gateTitle}
+              style={{ color: "var(--accent-magenta)" }}
+            >
+              EXIT GATE
+            </h3>
           </div>
           <div className={styles.gateContent}>
             <div className={styles.gateStatus}>
               <div className={styles.gateStatusLeft}>
                 {exitGateStatus === "OPEN" ? (
-                  <DoorOpen size={40} style={{ color: "#ec4899" }} strokeWidth={1} />
+                  <DoorOpen
+                    size={40}
+                    style={{ color: "var(--accent-magenta)" }}
+                    strokeWidth={1}
+                  />
                 ) : (
-                  <DoorClosed size={40} style={{ color: "#64748b" }} strokeWidth={1} />
+                  <DoorClosed
+                    size={40}
+                    style={{ color: "var(--text-muted)" }}
+                    strokeWidth={1}
+                  />
                 )}
                 <div>
                   <p className={styles.gateStatusLabel}>STATUS</p>
-                  <p className={styles.gateStatusValue} style={{ color: exitGateStatus === "OPEN" ? "#ec4899" : "#64748b" }}>
+                  <p
+                    className={styles.gateStatusValue}
+                    style={{
+                      color:
+                        exitGateStatus === "OPEN"
+                          ? "var(--accent-magenta)"
+                          : "var(--text-muted)",
+                    }}
+                  >
                     {exitGateStatus}
                   </p>
                 </div>
               </div>
-              <div className={`${styles.gateIndicator} ${exitGateStatus === "OPEN" ? styles.gateIndicatorActive : ""}`}
-                style={{ borderColor: exitGateStatus === "OPEN" ? "rgba(236,72,153,0.3)" : undefined }}>
-                <div className={`${styles.gateIndicatorDot} ${exitGateStatus === "OPEN" ? styles.gateIndicatorDotActive : ""}`}
-                  style={{ background: exitGateStatus === "OPEN" ? "#ec4899" : "#64748b" }} />
+              <div
+                className={`${styles.gateIndicator} ${exitGateStatus === "OPEN" ? styles.gateIndicatorActive : ""}`}
+                style={{
+                  borderColor:
+                    exitGateStatus === "OPEN"
+                      ? "rgba(236,72,153,0.3)"
+                      : undefined,
+                }}
+              >
+                <div
+                  className={`${styles.gateIndicatorDot} ${exitGateStatus === "OPEN" ? styles.gateIndicatorDotActive : ""}`}
+                  style={{
+                    background:
+                      exitGateStatus === "OPEN"
+                        ? "var(--accent-magenta)"
+                        : "var(--text-muted)",
+                  }}
+                />
               </div>
             </div>
             <div className={styles.gateButtons}>
-              <button onClick={() => handleGateControl("EXIT", "OPEN")} disabled={exitGateStatus === "OPEN"}
-                className={`${styles.gateBtn} ${styles.gateBtnOpen} ${exitGateStatus === "OPEN" ? styles.gateBtnDisabled : ""}`}>
+              <button
+                onClick={() => handleGateControl("EXIT", "OPEN")}
+                disabled={exitGateStatus === "OPEN"}
+                className={`${styles.gateBtn} ${styles.gateBtnOpen} ${exitGateStatus === "OPEN" ? styles.gateBtnDisabled : ""}`}
+              >
                 OPEN GATE
               </button>
-              <button onClick={() => handleGateControl("EXIT", "CLOSE")} disabled={exitGateStatus === "CLOSED"}
-                className={`${styles.gateBtn} ${styles.gateBtnClose} ${exitGateStatus === "CLOSED" ? styles.gateBtnDisabled : ""}`}>
+              <button
+                onClick={() => handleGateControl("EXIT", "CLOSE")}
+                disabled={exitGateStatus === "CLOSED"}
+                className={`${styles.gateBtn} ${styles.gateBtnClose} ${exitGateStatus === "CLOSED" ? styles.gateBtnDisabled : ""}`}
+              >
                 CLOSE GATE
               </button>
             </div>
@@ -488,26 +628,42 @@ export function Dashboard() {
         </div>
 
         {/* ---- FILTER BAR */}
-        <div style={{ display: "flex", gap: "10px", alignItems: "center", padding: "12px 16px" }}>
-
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            alignItems: "center",
+            padding: "12px 16px",
+          }}
+        >
           {/* Search Card ID */}
           <div style={{ position: "relative", flex: "2 1 180px" }}>
-            <Search size={14} style={{
-              position: "absolute", left: 10, top: "50%",
-              transform: "translateY(-50%)", color: "#64748b", pointerEvents: "none",
-            }} />
+            <Search
+              size={14}
+              style={{
+                position: "absolute",
+                left: 10,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--text-muted)",
+                pointerEvents: "none",
+              }}
+            />
             <input
               type="text"
               placeholder="Search by Card ID..."
               value={searchCard}
-              onChange={(e) => { setSearchCard(e.target.value); setCurrentPage(1); }}
+              onChange={(e) => {
+                setSearchCard(e.target.value);
+                setCurrentPage(1);
+              }}
               style={{
                 width: "100%",
                 padding: "8px 10px 8px 32px",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                background: "var(--input-bg-soft)",
+                border: "1px solid var(--input-border-strong)",
                 borderRadius: 6,
-                color: "#e2e8f0",
+                color: "var(--text-main)",
                 fontSize: "0.78rem",
                 outline: "none",
                 boxSizing: "border-box",
@@ -517,18 +673,38 @@ export function Dashboard() {
 
           {/* Filter Bulan */}
           <div style={{ position: "relative", flex: "1 1 140px" }}>
-            <Filter size={14} style={{
-              position: "absolute", left: 10, top: "50%",
-              transform: "translateY(-50%)", color: "#64748b", pointerEvents: "none",
-            }} />
+            <Filter
+              size={14}
+              style={{
+                position: "absolute",
+                left: 10,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--text-muted)",
+                pointerEvents: "none",
+              }}
+            />
             <select
               value={filterMonth}
-              onChange={(e) => { setFilterMonth(e.target.value); setCurrentPage(1); }}
-              style={{ ...dropdownStyle, color: filterMonth ? "#e2e8f0" : "#64748b" }}
+              onChange={(e) => {
+                setFilterMonth(e.target.value);
+                setCurrentPage(1);
+              }}
+              style={{
+                ...dropdownStyle,
+                color: filterMonth ? "var(--text-main)" : "var(--text-muted)",
+              }}
             >
               <option value="">Semua Bulan</option>
               {availableMonths.map((m) => (
-                <option key={m} value={m} style={{ background: "#1e293b" }}>
+                <option
+                  key={m}
+                  value={m}
+                  style={{
+                    background: "var(--surface-3)",
+                    color: "var(--text-main)",
+                  }}
+                >
                   {formatMonth(m)}
                 </option>
               ))}
@@ -537,26 +713,68 @@ export function Dashboard() {
 
           {/* Filter Status */}
           <div style={{ position: "relative", flex: "1 1 140px" }}>
-            <Filter size={14} style={{
-              position: "absolute", left: 10, top: "50%",
-              transform: "translateY(-50%)", color: "#64748b", pointerEvents: "none",
-            }} />
+            <Filter
+              size={14}
+              style={{
+                position: "absolute",
+                left: 10,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--text-muted)",
+                pointerEvents: "none",
+              }}
+            />
             <select
               value={filterStatus}
-              onChange={(e) => { setFilterStatus(e.target.value as "ALL" | "ACCEPTED" | "REJECTED"); setCurrentPage(1); }}
+              onChange={(e) => {
+                setFilterStatus(
+                  e.target.value as "ALL" | "ACCEPTED" | "REJECTED",
+                );
+                setCurrentPage(1);
+              }}
               style={{
                 ...dropdownStyle,
-                color: filterStatus === "ACCEPTED" ? "#10b981" : filterStatus === "REJECTED" ? "#ec4899" : "#64748b",
-                borderColor: filterStatus === "ACCEPTED"
-                  ? "rgba(16,185,129,0.4)"
-                  : filterStatus === "REJECTED"
-                  ? "rgba(236,72,153,0.4)"
-                  : "rgba(255,255,255,0.1)",
+                color:
+                  filterStatus === "ACCEPTED"
+                    ? "var(--accent-green)"
+                    : filterStatus === "REJECTED"
+                      ? "var(--accent-magenta)"
+                      : "var(--text-muted)",
+                borderColor:
+                  filterStatus === "ACCEPTED"
+                    ? "rgba(16,185,129,0.4)"
+                    : filterStatus === "REJECTED"
+                      ? "rgba(236,72,153,0.4)"
+                      : "var(--input-border-strong)",
               }}
             >
-              <option value="ALL" style={{ background: "#1e293b", color: "#e2e8f0" }}>Semua Status</option>
-              <option value="ACCEPTED" style={{ background: "#1e293b", color: "#10b981" }}>✓ Diterima</option>
-              <option value="REJECTED" style={{ background: "#1e293b", color: "#ec4899" }}>✗ Ditolak</option>
+              <option
+                value="ALL"
+                style={{
+                  background: "var(--surface-3)",
+                  color: "var(--text-main)",
+                }}
+              >
+                Semua Status
+              </option>
+              <option
+                value="ACCEPTED"
+                style={{
+                  background: "var(--surface-3)",
+                  color: "var(--accent-green)",
+                }}
+              >
+                ✓ Diterima
+              </option>
+              <option
+                value="REJECTED"
+                style={{
+                  background: "var(--surface-3)",
+                  color: "var(--accent-magenta)",
+                }}
+              >
+                ✗ Ditolak
+              </option>
             </select>
           </div>
 
@@ -570,9 +788,9 @@ export function Dashboard() {
               gap: 6,
               padding: "8px 14px",
               borderRadius: 6,
-              border: "1px solid rgba(0,212,255,0.3)",
-              background: "rgba(0,212,255,0.08)",
-              color: "#00d4ff",
+              border: "1px solid var(--chip-active-border)",
+              background: "var(--chip-active-bg)",
+              color: "var(--accent-cyan)",
               fontSize: "0.78rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -580,8 +798,14 @@ export function Dashboard() {
               flexShrink: 0,
               transition: "all 0.15s",
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,212,255,0.18)"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,212,255,0.08)"; }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background =
+                "var(--chip-active-bg-strong)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background =
+                "var(--chip-active-bg)";
+            }}
           >
             <Download size={14} />
             EXPORT CSV ({filteredTransactions.length})
@@ -590,7 +814,10 @@ export function Dashboard() {
 
         {/* Table */}
         <div className={styles.tableScrollContainer}>
-          <table className={styles.transactionTable} style={{ tableLayout: "fixed" }}>
+          <table
+            className={styles.transactionTable}
+            style={{ tableLayout: "fixed" }}
+          >
             <colgroup>
               <col style={{ width: "155px" }} />
               <col style={{ width: "105px" }} />
@@ -618,7 +845,14 @@ export function Dashboard() {
             <tbody>
               {filteredTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "20px", color: "#64748b" }}>
+                  <td
+                    colSpan={7}
+                    style={{
+                      textAlign: "center",
+                      padding: "20px",
+                      color: "var(--text-muted)",
+                    }}
+                  >
                     {transactions.length === 0
                       ? "Menunggu data RFID... Tap kartu di Wokwi."
                       : "Tidak ada transaksi yang sesuai filter."}
@@ -634,65 +868,115 @@ export function Dashboard() {
                         : styles.tableBodyRowRejected
                     }`}
                   >
-                    <td className={`${styles.tableCell} ${styles.tableCellCardId}`}>
+                    <td
+                      className={`${styles.tableCell} ${styles.tableCellCardId}`}
+                    >
                       {transaction.cardId}
                     </td>
-                    <td className={styles.tableCell} style={{ color: "#94a3b8", fontSize: "0.78rem" }}>
+                    <td
+                      className={styles.tableCell}
+                      style={{
+                        color: "var(--text-subtle)",
+                        fontSize: "0.78rem",
+                      }}
+                    >
                       {transaction.nama || "-"}
                     </td>
                     <td className={styles.tableCell}>
                       <span className={styles.gateTag}>
                         {transaction.gate === "ENTRY" ? (
-                          <ArrowRight size={14} style={{ color: "#00d4ff" }} />
+                          <ArrowRight
+                            size={14}
+                            style={{ color: "var(--accent-cyan)" }}
+                          />
                         ) : (
-                          <ArrowLeft size={14} style={{ color: "#ec4899" }} />
+                          <ArrowLeft
+                            size={14}
+                            style={{ color: "var(--accent-magenta)" }}
+                          />
                         )}
                         {transaction.gate}
                       </span>
                     </td>
-                    <td className={`${styles.tableCell} ${styles.tableCellTime}`}>
+                    <td
+                      className={`${styles.tableCell} ${styles.tableCellTime}`}
+                    >
                       {transaction.date}
                     </td>
-                    <td className={`${styles.tableCell} ${styles.tableCellTime}`}>
+                    <td
+                      className={`${styles.tableCell} ${styles.tableCellTime}`}
+                    >
                       {transaction.time}
                     </td>
                     <td className={styles.tableCell}>
                       <div className={styles.statusBadge}>
                         {transaction.status === "ACCEPTED" ? (
                           <>
-                            <CheckCircle size={18} style={{ color: "#10b981" }} />
-                            <span className={styles.statusAccepted}>ACCEPTED</span>
+                            <CheckCircle
+                              size={18}
+                              style={{ color: "var(--accent-green)" }}
+                            />
+                            <span className={styles.statusAccepted}>
+                              ACCEPTED
+                            </span>
                           </>
                         ) : (
                           <>
-                            <XCircle size={18} style={{ color: "#ec4899" }} />
-                            <span className={styles.statusRejected}>REJECTED</span>
+                            <XCircle
+                              size={18}
+                              style={{ color: "var(--accent-magenta)" }}
+                            />
+                            <span className={styles.statusRejected}>
+                              REJECTED
+                            </span>
                           </>
                         )}
                       </div>
                     </td>
                     {/* Biaya */}
-                    <td className={styles.tableCell} style={{
-                      color: transaction.biaya > 0 ? "#f59e0b" : "#64748b",
-                      fontWeight: transaction.biaya > 0 ? 600 : 400,
-                      whiteSpace: "nowrap",
-                    }}>
-                      {transaction.biaya > 0 ? formatRupiah(transaction.biaya) : "-"}
+                    <td
+                      className={styles.tableCell}
+                      style={{
+                        color:
+                          transaction.biaya > 0
+                            ? "var(--accent-yellow)"
+                            : "var(--text-muted)",
+                        fontWeight: transaction.biaya > 0 ? 600 : 400,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {transaction.biaya > 0
+                        ? formatRupiah(transaction.biaya)
+                        : "-"}
                     </td>
                     {/* Saldo Akhir */}
-                    <td className={styles.tableCell} style={{
-                      color: transaction.saldo_sesudah != null ? "#10b981" : "#64748b",
-                      fontSize: "0.78rem",
-                      whiteSpace: "nowrap",
-                    }}>
-                      {transaction.saldo_sesudah != null ? formatRupiah(transaction.saldo_sesudah) : "-"}
+                    <td
+                      className={styles.tableCell}
+                      style={{
+                        color:
+                          transaction.saldo_sesudah != null
+                            ? "var(--accent-green)"
+                            : "var(--text-muted)",
+                        fontSize: "0.78rem",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {transaction.saldo_sesudah != null
+                        ? formatRupiah(transaction.saldo_sesudah)
+                        : "-"}
                     </td>
                     {/* Keterangan */}
-                    <td className={styles.tableCell} style={{
-                      color: transaction.status === "ACCEPTED" ? "#64748b" : "#f87171",
-                      fontSize: "0.75rem",
-                      maxWidth: 220,
-                    }}>
+                    <td
+                      className={styles.tableCell}
+                      style={{
+                        color:
+                          transaction.status === "ACCEPTED"
+                            ? "var(--text-muted)"
+                            : "var(--accent-red)",
+                        fontSize: "0.75rem",
+                        maxWidth: 220,
+                      }}
+                    >
                       {transaction.keterangan || "-"}
                     </td>
                   </tr>
@@ -703,58 +987,101 @@ export function Dashboard() {
         </div>
 
         {/* Pagination Controls */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          marginTop: "1rem", flexWrap: "wrap", gap: "0.75rem",
-        }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginTop: "1rem",
+            flexWrap: "wrap",
+            gap: "0.75rem",
+          }}
+        >
           {/* Rows per page */}
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ color: "#64748b", fontSize: "0.78rem" }}>Baris per halaman:</span>
+            <span style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>
+              Baris per halaman:
+            </span>
             <select
               value={rowsPerPage}
               onChange={(e) => setRowsPerPage(Number(e.target.value))}
               style={{
-                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 6, color: "#e2e8f0", fontSize: "0.78rem", padding: "4px 8px",
-                outline: "none", cursor: "pointer",
+                background: "var(--input-bg-soft)",
+                border: "1px solid var(--input-border-strong)",
+                borderRadius: 6,
+                color: "var(--text-main)",
+                fontSize: "0.78rem",
+                padding: "4px 8px",
+                outline: "none",
+                cursor: "pointer",
               }}
             >
               {[10, 25, 50, 100].map((n) => (
-                <option key={n} value={n} style={{ background: "#1e293b" }}>{n}</option>
+                <option
+                  key={n}
+                  value={n}
+                  style={{
+                    background: "var(--surface-3)",
+                    color: "var(--text-main)",
+                  }}
+                >
+                  {n}
+                </option>
               ))}
             </select>
           </div>
 
           {/* Page info + navigation */}
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ color: "#64748b", fontSize: "0.78rem" }}>
-              {filteredTransactions.length === 0 ? "0 data" : (
-                `${(currentPage - 1) * rowsPerPage + 1}–${Math.min(currentPage * rowsPerPage, filteredTransactions.length)} dari ${filteredTransactions.length}`
-              )}
+            <span style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>
+              {filteredTransactions.length === 0
+                ? "0 data"
+                : `${(currentPage - 1) * rowsPerPage + 1}–${Math.min(currentPage * rowsPerPage, filteredTransactions.length)} dari ${filteredTransactions.length}`}
             </span>
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               style={{
-                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 6, color: currentPage === 1 ? "#334155" : "#94a3b8",
-                padding: "4px 8px", cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                display: "flex", alignItems: "center",
+                background: "var(--input-bg-soft)",
+                border: "1px solid var(--input-border-strong)",
+                borderRadius: 6,
+                color:
+                  currentPage === 1
+                    ? "var(--text-faint)"
+                    : "var(--text-subtle)",
+                padding: "4px 8px",
+                cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
               }}
             >
               <ChevronLeft size={16} />
             </button>
-            <span style={{ color: "#94a3b8", fontSize: "0.78rem", minWidth: "60px", textAlign: "center" }}>
+            <span
+              style={{
+                color: "var(--text-subtle)",
+                fontSize: "0.78rem",
+                minWidth: "60px",
+                textAlign: "center",
+              }}
+            >
               {currentPage} / {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
               style={{
-                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 6, color: currentPage === totalPages ? "#334155" : "#94a3b8",
-                padding: "4px 8px", cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                display: "flex", alignItems: "center",
+                background: "var(--input-bg-soft)",
+                border: "1px solid var(--input-border-strong)",
+                borderRadius: 6,
+                color:
+                  currentPage === totalPages
+                    ? "var(--text-faint)"
+                    : "var(--text-subtle)",
+                padding: "4px 8px",
+                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
               }}
             >
               <ChevronRight size={16} />
@@ -768,8 +1095,8 @@ export function Dashboard() {
           0%, 100% { opacity: 1; }
           50%       { opacity: 0.5; }
         }
-        input::placeholder { color: #64748b; }
-        select option { background: #1e293b; color: #e2e8f0; }
+        input::placeholder { color: var(--text-muted); }
+        select option { background: var(--surface-3); color: var(--text-main); }
       `}</style>
     </main>
   );

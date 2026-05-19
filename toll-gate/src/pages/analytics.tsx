@@ -121,19 +121,19 @@ const DF_S: Record<string, React.CSSProperties> = {
     background: "none",
   },
   chipInactive: {
-    backgroundColor: "rgba(15,23,42,0.7)",
-    borderColor: "rgba(30,41,59,0.9)",
-    color: "#64748b",
+    backgroundColor: "var(--chip-bg)",
+    borderColor: "var(--chip-border)",
+    color: "var(--chip-text)",
   },
   chipActive: {
-    backgroundColor: "rgba(0,212,255,0.1)",
-    borderColor: "rgba(0,212,255,0.5)",
-    color: "#00d4ff",
+    backgroundColor: "var(--chip-active-bg)",
+    borderColor: "var(--chip-active-border)",
+    color: "var(--chip-active-text)",
   },
   divider: {
     width: "1px",
     height: "20px",
-    backgroundColor: "rgba(30,41,59,0.9)",
+    backgroundColor: "var(--chip-border)",
     margin: "0 0.25rem",
     flexShrink: 0,
   },
@@ -147,9 +147,9 @@ const DF_S: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     letterSpacing: "0.04em",
     cursor: "pointer",
-    border: "1px solid rgba(30,41,59,0.9)",
-    backgroundColor: "rgba(15,23,42,0.7)",
-    color: "#94a3b8",
+    border: "1px solid var(--chip-border)",
+    backgroundColor: "var(--chip-bg)",
+    color: "var(--text-subtle)",
     transition: "all 0.15s ease",
     userSelect: "none",
     whiteSpace: "nowrap",
@@ -164,9 +164,9 @@ const DF_S: Record<string, React.CSSProperties> = {
     borderRadius: "4px",
     fontSize: "10px",
     fontWeight: 500,
-    color: "#475569",
-    backgroundColor: "rgba(15,23,42,0.5)",
-    border: "1px solid rgba(30,41,59,0.6)",
+    color: "var(--text-faint)",
+    backgroundColor: "var(--badge-bg)",
+    border: "1px solid var(--badge-border)",
     letterSpacing: "0.02em",
     whiteSpace: "nowrap",
   },
@@ -179,11 +179,11 @@ const DF_S: Record<string, React.CSSProperties> = {
     top: "calc(100% + 8px)",
     left: 0,
     zIndex: 100,
-    backgroundColor: "#0a1628",
-    border: "1px solid rgba(0,212,255,0.2)",
+    backgroundColor: "var(--surface-overlay)",
+    border: "1px solid var(--chip-active-border)",
     borderRadius: "8px",
     padding: "1rem",
-    boxShadow: "0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,212,255,0.08)",
+    boxShadow: "var(--popover-shadow)",
     display: "flex",
     flexDirection: "column",
     gap: "0.75rem",
@@ -193,7 +193,7 @@ const DF_S: Record<string, React.CSSProperties> = {
     fontSize: "10px",
     fontWeight: 700,
     letterSpacing: "0.1em",
-    color: "#334155",
+    color: "var(--text-faint)",
     textTransform: "uppercase",
   },
   inputRow: {
@@ -204,7 +204,7 @@ const DF_S: Record<string, React.CSSProperties> = {
   inputLabel: {
     fontSize: "10px",
     fontWeight: 600,
-    color: "#64748b",
+    color: "var(--text-muted)",
     letterSpacing: "0.06em",
     textTransform: "uppercase",
     width: "28px",
@@ -214,9 +214,9 @@ const DF_S: Record<string, React.CSSProperties> = {
     flex: 1,
     padding: "0.5rem 0.65rem",
     borderRadius: "5px",
-    border: "1px solid rgba(30,41,59,0.9)",
-    backgroundColor: "#060e1e",
-    color: "#e2e8f0",
+    border: "1px solid var(--input-border)",
+    backgroundColor: "var(--input-bg)",
+    color: "var(--text-main)",
     fontSize: "11px",
     fontWeight: 500,
     fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
@@ -229,9 +229,9 @@ const DF_S: Record<string, React.CSSProperties> = {
     width: "100%",
     padding: "0.55rem",
     borderRadius: "5px",
-    border: "1px solid rgba(0,212,255,0.4)",
-    backgroundColor: "rgba(0,212,255,0.1)",
-    color: "#00d4ff",
+    border: "1px solid var(--chip-active-border)",
+    backgroundColor: "var(--chip-active-bg)",
+    color: "var(--chip-active-text)",
     fontSize: "11px",
     fontWeight: 700,
     letterSpacing: "0.08em",
@@ -246,9 +246,9 @@ const DF_S: Record<string, React.CSSProperties> = {
     justifyContent: "center",
     padding: "0.35rem 0.55rem",
     borderRadius: "4px",
-    border: "1px solid rgba(30,41,59,0.9)",
-    backgroundColor: "rgba(15,23,42,0.7)",
-    color: "#475569",
+    border: "1px solid var(--chip-border)",
+    backgroundColor: "var(--chip-bg)",
+    color: "var(--text-faint)",
     cursor: "pointer",
     fontSize: "11px",
     transition: "all 0.15s ease",
@@ -327,14 +327,14 @@ const DateFilterControl = ({
             onClick={() => applyPreset(p)}
             onMouseEnter={(e) => {
               if (!isPresetActive(p)) {
-                e.currentTarget.style.borderColor = "rgba(0,212,255,0.3)";
-                e.currentTarget.style.color = "#94a3b8";
+                e.currentTarget.style.borderColor = "var(--chip-active-border)";
+                e.currentTarget.style.color = "var(--text-subtle)";
               }
             }}
             onMouseLeave={(e) => {
               if (!isPresetActive(p)) {
-                e.currentTarget.style.borderColor = "rgba(30,41,59,0.9)";
-                e.currentTarget.style.color = "#64748b";
+                e.currentTarget.style.borderColor = "var(--chip-border)";
+                e.currentTarget.style.color = "var(--chip-text)";
               }
             }}
           >
@@ -344,8 +344,8 @@ const DateFilterControl = ({
                   width: 5,
                   height: 5,
                   borderRadius: "50%",
-                  backgroundColor: "#00d4ff",
-                  boxShadow: "0 0 6px #00d4ff",
+                  backgroundColor: "var(--accent-cyan)",
+                  boxShadow: "0 0 6px var(--accent-cyan)",
                   display: "inline-block",
                   flexShrink: 0,
                 }}
@@ -364,9 +364,9 @@ const DateFilterControl = ({
               ...DF_S.customBtn,
               ...(open || isCustomActive
                 ? {
-                    borderColor: "rgba(0,212,255,0.5)",
-                    color: "#00d4ff",
-                    backgroundColor: "rgba(0,212,255,0.08)",
+                    borderColor: "var(--chip-active-border)",
+                    color: "var(--chip-active-text)",
+                    backgroundColor: "var(--chip-active-bg)",
                   }
                 : {}),
             }}
@@ -400,8 +400,8 @@ const DateFilterControl = ({
                     ...DF_S.dateInput,
                     ...(inputFocus === "start"
                       ? {
-                          borderColor: "rgba(0,212,255,0.5)",
-                          boxShadow: "0 0 0 2px rgba(0,212,255,0.1)",
+                          borderColor: "var(--chip-active-border)",
+                          boxShadow: "0 0 0 2px var(--chip-active-bg)",
                         }
                       : {}),
                   }}
@@ -424,8 +424,8 @@ const DateFilterControl = ({
                     ...DF_S.dateInput,
                     ...(inputFocus === "end"
                       ? {
-                          borderColor: "rgba(0,212,255,0.5)",
-                          boxShadow: "0 0 0 2px rgba(0,212,255,0.1)",
+                          borderColor: "var(--chip-active-border)",
+                          boxShadow: "0 0 0 2px var(--chip-active-bg)",
                         }
                       : {}),
                   }}
@@ -438,7 +438,7 @@ const DateFilterControl = ({
                 <span
                   style={{
                     fontSize: "10px",
-                    color: "#ef4444",
+                    color: "var(--accent-red)",
                     letterSpacing: "0.03em",
                   }}
                 >
@@ -451,10 +451,12 @@ const DateFilterControl = ({
                 onClick={applyCustom}
                 disabled={!draft.start || !draft.end || draft.start > draft.end}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(0,212,255,0.2)";
+                  e.currentTarget.style.backgroundColor =
+                    "var(--chip-active-bg-strong)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(0,212,255,0.1)";
+                  e.currentTarget.style.backgroundColor =
+                    "var(--chip-active-bg)";
                 }}
               >
                 Apply Range
@@ -472,12 +474,12 @@ const DateFilterControl = ({
             setEndDate(todayStr());
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "rgba(100,116,139,0.5)";
-            e.currentTarget.style.color = "#94a3b8";
+            e.currentTarget.style.borderColor = "var(--chip-border)";
+            e.currentTarget.style.color = "var(--text-subtle)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "rgba(30,41,59,0.9)";
-            e.currentTarget.style.color = "#475569";
+            e.currentTarget.style.borderColor = "var(--chip-border)";
+            e.currentTarget.style.color = "var(--text-faint)";
           }}
         >
           <X size={11} />
@@ -513,8 +515,13 @@ const volumeData = [
 ];
 
 const validationData = [
-  { date: todayStr(), name: "Accepted", value: 1847, fill: "#10b981" },
-  { date: todayStr(), name: "Rejected", value: 153, fill: "#ef4444" },
+  {
+    date: todayStr(),
+    name: "Accepted",
+    value: 1847,
+    fill: "var(--accent-green)",
+  },
+  { date: todayStr(), name: "Rejected", value: 153, fill: "var(--accent-red)" },
 ];
 
 const latencyData = [
@@ -641,26 +648,27 @@ const ExportButton = ({
       gap: "0.4rem",
       padding: "0.5rem 0.9rem",
       borderRadius: "6px",
-      border: "1px solid rgba(148, 163, 184, 0.3)",
-      backgroundColor: "rgba(148, 163, 184, 0.08)",
-      color: "#cbd5e1",
+      border: "1px solid var(--accent-neutral-border)",
+      backgroundColor: "var(--accent-neutral-bg)",
+      color: "var(--accent-neutral-text)",
       cursor: "pointer",
       fontSize: "12px",
       fontWeight: "500",
       transition: "all 0.2s ease",
     }}
     onMouseEnter={(e) => {
-      (e.currentTarget as HTMLElement).style.borderColor = "#00d4ff";
+      (e.currentTarget as HTMLElement).style.borderColor = "var(--accent-cyan)";
       (e.currentTarget as HTMLElement).style.backgroundColor =
-        "rgba(0, 212, 255, 0.1)";
-      (e.currentTarget as HTMLElement).style.color = "#00d4ff";
+        "var(--chip-active-bg)";
+      (e.currentTarget as HTMLElement).style.color = "var(--accent-cyan)";
     }}
     onMouseLeave={(e) => {
       (e.currentTarget as HTMLElement).style.borderColor =
-        "rgba(148, 163, 184, 0.3)";
+        "var(--accent-neutral-border)";
       (e.currentTarget as HTMLElement).style.backgroundColor =
-        "rgba(148, 163, 184, 0.08)";
-      (e.currentTarget as HTMLElement).style.color = "#cbd5e1";
+        "var(--accent-neutral-bg)";
+      (e.currentTarget as HTMLElement).style.color =
+        "var(--accent-neutral-text)";
     }}
   >
     <Download size={14} />
@@ -701,13 +709,13 @@ const AnalyticsPage = () => {
 
   // ── Single date range for real-data charts ────────────────────────────────
   const [startDate, setStartDate] = useState(defaultStart);
-  const [endDate, setEndDate]     = useState(defaultEnd);
+  const [endDate, setEndDate] = useState(defaultEnd);
 
   // ── Keep separate date for mock charts ────────────────────────────────────
   const [latencyStartDate, setLatencyStartDate] = useState(defaultStart);
-  const [latencyEndDate, setLatencyEndDate]     = useState(defaultEnd);
+  const [latencyEndDate, setLatencyEndDate] = useState(defaultEnd);
   const [heatmapStartDate, setHeatmapStartDate] = useState(defaultStart);
-  const [heatmapEndDate, setHeatmapEndDate]     = useState(defaultEnd);
+  const [heatmapEndDate, setHeatmapEndDate] = useState(defaultEnd);
 
   // ── Analytics data from API ────────────────────────────────────────────────
   const [analyticsData, setAnalyticsData] = useState<{
@@ -715,8 +723,12 @@ const AnalyticsPage = () => {
     accessValidation: { name: string; value: number }[];
     revenueHarian: { tanggal: string; revenue: number }[];
     stats: {
-      totalMasuk: number; totalKeluar: number; diDalam: number;
-      totalRevenue: number; totalTransaksi: number; successRate: number;
+      totalMasuk: number;
+      totalKeluar: number;
+      diDalam: number;
+      totalRevenue: number;
+      totalTransaksi: number;
+      successRate: number;
     };
   } | null>(null);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
@@ -725,7 +737,9 @@ const AnalyticsPage = () => {
     setIsLoadingAnalytics(true);
     fetch(`/api/analytics?from=${startDate}&to=${endDate}`)
       .then((r) => r.json())
-      .then((data) => { if (!data.error) setAnalyticsData(data); })
+      .then((data) => {
+        if (!data.error) setAnalyticsData(data);
+      })
       .catch(() => {})
       .finally(() => setIsLoadingAnalytics(false));
   }, [startDate, endDate]);
@@ -752,7 +766,9 @@ const AnalyticsPage = () => {
               <span>Total Masuk</span>
             </div>
             <div className={`${styles.statValue} ${styles.textCyan}`}>
-              {isLoadingAnalytics ? "—" : (analyticsData?.stats.totalMasuk ?? 0)}
+              {isLoadingAnalytics
+                ? "—"
+                : (analyticsData?.stats.totalMasuk ?? 0)}
             </div>
             <div className={styles.statMeta}>Kendaraan masuk</div>
           </div>
@@ -762,7 +778,9 @@ const AnalyticsPage = () => {
               <span>Total Keluar</span>
             </div>
             <div className={`${styles.statValue} ${styles.textGreen}`}>
-              {isLoadingAnalytics ? "—" : (analyticsData?.stats.totalKeluar ?? 0)}
+              {isLoadingAnalytics
+                ? "—"
+                : (analyticsData?.stats.totalKeluar ?? 0)}
             </div>
             <div className={styles.statMeta}>Kendaraan keluar</div>
           </div>
@@ -772,7 +790,9 @@ const AnalyticsPage = () => {
               <span>Success Rate</span>
             </div>
             <div className={`${styles.statValue} ${styles.textPurple}`}>
-              {isLoadingAnalytics ? "—" : `${analyticsData?.stats.successRate ?? 0}%`}
+              {isLoadingAnalytics
+                ? "—"
+                : `${analyticsData?.stats.successRate ?? 0}%`}
             </div>
             <div className={styles.statMeta}>Acceptance ratio</div>
           </div>
@@ -781,8 +801,13 @@ const AnalyticsPage = () => {
               <Clock size={16} />
               <span>Total Revenue</span>
             </div>
-            <div className={`${styles.statValue} ${styles.textYellow}`} style={{ fontSize: "1.1rem" }}>
-              {isLoadingAnalytics ? "—" : `Rp ${(analyticsData?.stats.totalRevenue ?? 0).toLocaleString("id-ID")}`}
+            <div
+              className={`${styles.statValue} ${styles.textYellow}`}
+              style={{ fontSize: "1.1rem" }}
+            >
+              {isLoadingAnalytics
+                ? "—"
+                : `Rp ${(analyticsData?.stats.totalRevenue ?? 0).toLocaleString("id-ID")}`}
             </div>
             <div className={styles.statMeta}>Dari gate keluar</div>
           </div>
@@ -818,44 +843,60 @@ const AnalyticsPage = () => {
               <AreaChart data={analyticsData?.trafficVolume ?? []}>
                 <defs>
                   <linearGradient id="colorEntry" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    <stop
+                      offset="5%"
+                      stopColor="var(--accent-green)"
+                      stopOpacity={0.3}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor="var(--accent-green)"
+                      stopOpacity={0}
+                    />
                   </linearGradient>
                   <linearGradient id="colorExit" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00d4ff" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#00d4ff" stopOpacity={0} />
+                    <stop
+                      offset="5%"
+                      stopColor="var(--accent-cyan)"
+                      stopOpacity={0.3}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor="var(--accent-cyan)"
+                      stopOpacity={0}
+                    />
                   </linearGradient>
                 </defs>
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="#1e293b"
+                  stroke="var(--border-color)"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="jam"
-                  stroke="#64748b"
+                  stroke="var(--text-muted)"
                   fontSize={10}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  stroke="#64748b"
+                  stroke="var(--text-muted)"
                   fontSize={10}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#0f172a",
-                    border: "1px solid #1e293b",
+                    backgroundColor: "var(--surface-1)",
+                    border: "1px solid var(--border-color)",
                     borderRadius: "8px",
                   }}
-                  itemStyle={{ color: "#f8fafc" }}
+                  itemStyle={{ color: "var(--text-main)" }}
                 />
                 <Area
                   type="monotone"
                   dataKey="masuk"
-                  stroke="#10b981"
+                  stroke="var(--accent-green)"
                   fillOpacity={1}
                   fill="url(#colorEntry)"
                   strokeWidth={2}
@@ -864,7 +905,7 @@ const AnalyticsPage = () => {
                 <Area
                   type="monotone"
                   dataKey="keluar"
-                  stroke="#00d4ff"
+                  stroke="var(--accent-cyan)"
                   fillOpacity={1}
                   fill="url(#colorExit)"
                   strokeWidth={2}
@@ -880,14 +921,14 @@ const AnalyticsPage = () => {
             <div className={styles.legendItem}>
               <div
                 className={styles.dot}
-                style={{ backgroundColor: "#10b981" }}
+                style={{ backgroundColor: "var(--accent-green)" }}
               />{" "}
               Entry
             </div>
             <div className={styles.legendItem}>
               <div
                 className={styles.dot}
-                style={{ backgroundColor: "#00d4ff" }}
+                style={{ backgroundColor: "var(--accent-cyan)" }}
               />{" "}
               Exit
             </div>
@@ -913,7 +954,13 @@ const AnalyticsPage = () => {
                 filename="access-validation"
               />
             </div>
-            <p style={{ fontSize: "0.72rem", color: "#475569", margin: "0 0 1rem" }}>
+            <p
+              style={{
+                fontSize: "0.72rem",
+                color: "var(--text-faint)",
+                margin: "0 0 1rem",
+              }}
+            >
               Menggunakan rentang tanggal yang sama dengan Traffic Volume
             </p>
             <div className={styles.pieContainer}>
@@ -921,8 +968,16 @@ const AnalyticsPage = () => {
                 <PieChart>
                   <Pie
                     data={[
-                      { name: "Diterima", value: analyticsData?.accessValidation[0]?.value ?? 0, fill: "#10b981" },
-                      { name: "Ditolak",  value: analyticsData?.accessValidation[1]?.value ?? 0, fill: "#ef4444" },
+                      {
+                        name: "Diterima",
+                        value: analyticsData?.accessValidation[0]?.value ?? 0,
+                        fill: "var(--accent-green)",
+                      },
+                      {
+                        name: "Ditolak",
+                        value: analyticsData?.accessValidation[1]?.value ?? 0,
+                        fill: "var(--accent-red)",
+                      },
                     ]}
                     cx="50%"
                     cy="50%"
@@ -930,22 +985,34 @@ const AnalyticsPage = () => {
                     outerRadius={80}
                     paddingAngle={2}
                     dataKey="value"
-                    stroke="#0f172a"
+                    stroke="var(--surface-1)"
                     strokeWidth={2}
                   >
-                    <Cell fill="#10b981" />
-                    <Cell fill="#ef4444" />
+                    <Cell fill="var(--accent-green)" />
+                    <Cell fill="var(--accent-red)" />
                   </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #1e293b", borderRadius: "8px" }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "var(--surface-1)",
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "8px",
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
               <div className={styles.pieLegend}>
                 <div className={styles.legendItem}>
-                  <div className={styles.dot} style={{ backgroundColor: "#10b981" }} />
+                  <div
+                    className={styles.dot}
+                    style={{ backgroundColor: "var(--accent-green)" }}
+                  />
                   Diterima: {analyticsData?.accessValidation[0]?.value ?? 0}
                 </div>
                 <div className={styles.legendItem}>
-                  <div className={styles.dot} style={{ backgroundColor: "#ef4444" }} />
+                  <div
+                    className={styles.dot}
+                    style={{ backgroundColor: "var(--accent-red)" }}
+                  />
                   Ditolak: {analyticsData?.accessValidation[1]?.value ?? 0}
                 </div>
               </div>
@@ -991,18 +1058,18 @@ const AnalyticsPage = () => {
               >
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="#1e293b"
+                  stroke="var(--border-color)"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="name"
-                  stroke="#64748b"
+                  stroke="var(--text-muted)"
                   fontSize={10}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  stroke="#64748b"
+                  stroke="var(--text-muted)"
                   fontSize={10}
                   axisLine={false}
                   tickLine={false}
@@ -1013,18 +1080,18 @@ const AnalyticsPage = () => {
                     value !== undefined ? formatTravelTime(Number(value)) : ""
                   }
                   contentStyle={{
-                    backgroundColor: "#0f172a",
-                    border: "1px solid #1e293b",
+                    backgroundColor: "var(--surface-1)",
+                    border: "1px solid var(--border-color)",
                     borderRadius: "8px",
                   }}
-                  itemStyle={{ color: "#f8fafc" }}
+                  itemStyle={{ color: "var(--text-main)" }}
                 />
                 <Line
                   type="monotone"
                   dataKey="seconds"
-                  stroke="#f59e0b"
+                  stroke="var(--accent-yellow)"
                   strokeWidth={3}
-                  dot={{ fill: "#f59e0b", r: 5 }}
+                  dot={{ fill: "var(--accent-yellow)", r: 5 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -1070,18 +1137,18 @@ const AnalyticsPage = () => {
               >
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="#1e293b"
+                  stroke="var(--border-color)"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="day"
-                  stroke="#64748b"
+                  stroke="var(--text-muted)"
                   fontSize={12}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  stroke="#64748b"
+                  stroke="var(--text-muted)"
                   fontSize={12}
                   axisLine={false}
                   tickLine={false}
@@ -1089,8 +1156,8 @@ const AnalyticsPage = () => {
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#0f172a",
-                    border: "1px solid #1e293b",
+                    backgroundColor: "var(--surface-1)",
+                    border: "1px solid var(--border-color)",
                     borderRadius: "8px",
                   }}
                   itemStyle={{ fontSize: "12px" }}
@@ -1098,25 +1165,25 @@ const AnalyticsPage = () => {
                 <Bar
                   dataKey="00:00 - 06:00"
                   stackId="a"
-                  fill="#a855f7"
+                  fill="var(--accent-purple)"
                   radius={[0, 0, 0, 0]}
                 />
                 <Bar
                   dataKey="06:00 - 12:00"
                   stackId="a"
-                  fill="#00d4ff"
+                  fill="var(--accent-cyan)"
                   radius={[0, 0, 0, 0]}
                 />
                 <Bar
                   dataKey="12:00 - 18:00"
                   stackId="a"
-                  fill="#f59e0b"
+                  fill="var(--accent-yellow)"
                   radius={[0, 0, 0, 0]}
                 />
                 <Bar
                   dataKey="18:00 - 24:00"
                   stackId="a"
-                  fill="#10b981"
+                  fill="var(--accent-green)"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
@@ -1132,28 +1199,28 @@ const AnalyticsPage = () => {
               <div className={styles.legendItem}>
                 <div
                   className={styles.dot}
-                  style={{ backgroundColor: "#a855f7" }}
+                  style={{ backgroundColor: "var(--accent-purple)" }}
                 />{" "}
                 00:00 - 06:00
               </div>
               <div className={styles.legendItem}>
                 <div
                   className={styles.dot}
-                  style={{ backgroundColor: "#00d4ff" }}
+                  style={{ backgroundColor: "var(--accent-cyan)" }}
                 />{" "}
                 06:00 - 12:00
               </div>
               <div className={styles.legendItem}>
                 <div
                   className={styles.dot}
-                  style={{ backgroundColor: "#f59e0b" }}
+                  style={{ backgroundColor: "var(--accent-yellow)" }}
                 />{" "}
                 12:00 - 18:00
               </div>
               <div className={styles.legendItem}>
                 <div
                   className={styles.dot}
-                  style={{ backgroundColor: "#10b981" }}
+                  style={{ backgroundColor: "var(--accent-green)" }}
                 />{" "}
                 18:00 - 24:00
               </div>
@@ -1172,44 +1239,59 @@ const AnalyticsPage = () => {
               marginBottom: "1rem",
             }}
           >
-            <h2 className={styles.chartTitle}>TOTAL Revenue - Daily (Gate Keluar)</h2>
+            <h2 className={styles.chartTitle}>
+              TOTAL Revenue - Daily (Gate Keluar)
+            </h2>
             <ExportButton
               data={analyticsData?.revenueHarian ?? []}
               filename="total-revenue-daily"
             />
           </div>
-          <p style={{ fontSize: "0.72rem", color: "#475569", margin: "0 0 1rem" }}>
+          <p
+            style={{
+              fontSize: "0.72rem",
+              color: "var(--text-faint)",
+              margin: "0 0 1rem",
+            }}
+          >
             Menggunakan rentang tanggal yang sama dengan Traffic Volume
           </p>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={analyticsData?.revenueHarian ?? []}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#1e293b"
+                stroke="var(--border-color)"
                 vertical={false}
               />
               <XAxis
                 dataKey="tanggal"
-                stroke="#64748b"
+                stroke="var(--text-muted)"
                 fontSize={10}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                stroke="#64748b"
+                stroke="var(--text-muted)"
                 fontSize={10}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => `Rp${(v / 1000).toFixed(0)}k`}
               />
               <Tooltip
-                formatter={(value: any) => [`Rp ${Number(value).toLocaleString("id-ID")}`, "Revenue"]}
-                contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #1e293b", borderRadius: "8px" }}
-                itemStyle={{ color: "#f8fafc" }}
+                formatter={(value: any) => [
+                  `Rp ${Number(value).toLocaleString("id-ID")}`,
+                  "Revenue",
+                ]}
+                contentStyle={{
+                  backgroundColor: "var(--surface-1)",
+                  border: "1px solid var(--border-color)",
+                  borderRadius: "8px",
+                }}
+                itemStyle={{ color: "var(--text-main)" }}
               />
               <Bar
                 dataKey="revenue"
-                fill="#10b981"
+                fill="var(--accent-green)"
                 radius={[4, 4, 0, 0]}
                 barSize={40}
                 name="Revenue"

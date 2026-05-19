@@ -1,8 +1,8 @@
 .sidebar {
   width: 250px;
   height: 100vh;
-  background-color: #0d1525;
-  border-right: 1px solid #1a2333;
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-strong);
   display: flex;
   flex-direction: column;
   padding: 2rem 1rem;
@@ -17,7 +17,7 @@
   width: 6px;
 }
 .sidebar::-webkit-scrollbar-thumb {
-  background-color: #1a2333;
+  background-color: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
@@ -52,7 +52,7 @@
   font-weight: 800;
   line-height: 1;
   margin: 0;
-  color: white;
+  color: var(--text-strong);
   letter-spacing: 2px;
   font-family: sans-serif;
 }
@@ -60,7 +60,7 @@
 .logoSubtitle {
   font-size: 0.7rem;
   margin-top: 5px;
-  color: #64748b;
+  color: var(--text-muted);
   letter-spacing: 1.5px;
   font-weight: 600;
 }
@@ -70,7 +70,7 @@
   flex-direction: column;
   gap: 12px;
   padding-top: 1rem;
-  border-top: 1px solid #1a2333;
+  border-top: 1px solid var(--border-strong);
 }
 
 .navItem {
@@ -79,7 +79,7 @@
   gap: 15px;
   padding: 14px 1.2rem;
   text-decoration: none;
-  color: #94a3b8;
+  color: var(--text-subtle);
   font-size: 1rem;
   font-weight: 600;
   border-radius: 12px;
@@ -87,12 +87,12 @@
 }
 
 .navItem:hover {
-  color: white;
+  color: var(--text-strong);
 }
 
 .active {
-  background-color: #00d4ff;
-  color: #0b1426 !important;
+  background-color: var(--accent-cyan);
+  color: var(--accent-cyan-contrast) !important;
   box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
 }
 
@@ -102,7 +102,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid #1a2333;
+  border-top: 1px solid var(--border-strong);
 }
 
 .statusSection {
@@ -112,18 +112,37 @@
 
 .statusLabel {
   font-size: 0.7rem;
-  color: #64748b;
+  color: var(--text-muted);
   letter-spacing: 1px;
   font-weight: 700;
 }
 
 .statusText {
   font-size: 0.85rem;
-  color: #10b981;
+  color: var(--status-online);
   font-weight: 800;
 }
 
-.sunIcon {
-  color: #f59e0b;
+.themeToggle {
+  background: var(--input-bg-soft);
+  border: 1px solid var(--border-strong);
+  color: var(--text-subtle);
+  border-radius: 10px;
+  padding: 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.themeToggle:hover {
+  border-color: var(--accent-cyan);
+  color: var(--text-strong);
+  background: var(--chip-active-bg);
+}
+
+.themeToggle:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
 }
