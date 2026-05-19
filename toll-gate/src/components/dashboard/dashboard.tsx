@@ -459,7 +459,7 @@ export function Dashboard() {
           </div>
           <p
             className={`${styles.statValue} ${styles.textYellow}`}
-            style={{ fontSize: "1.1rem" }}
+            style={{ fontSize: "2.2rem" }}
           >
             {formatRupiah(totalRevenue)}
           </p>
@@ -814,19 +814,16 @@ export function Dashboard() {
 
         {/* Table */}
         <div className={styles.tableScrollContainer}>
-          <table
-            className={styles.transactionTable}
-            style={{ tableLayout: "fixed" }}
-          >
+          <table className={styles.transactionTable}>
             <colgroup>
-              <col style={{ width: "155px" }} />
+              <col style={{ width: "170px" }} />
+              <col style={{ width: "140px" }} />
               <col style={{ width: "105px" }} />
-              <col style={{ width: "95px" }} />
-              <col style={{ width: "100px" }} />
-              <col style={{ width: "90px" }} />
-              <col style={{ width: "130px" }} />
-              <col style={{ width: "110px" }} />
               <col style={{ width: "120px" }} />
+              <col style={{ width: "95px" }} />
+              <col style={{ width: "140px" }} />
+              <col style={{ width: "120px" }} />
+              <col style={{ width: "130px" }} />
               <col />
             </colgroup>
             <thead>
@@ -837,8 +834,16 @@ export function Dashboard() {
                 <th className={styles.tableHeaderCell}>TANGGAL</th>
                 <th className={styles.tableHeaderCell}>WAKTU</th>
                 <th className={styles.tableHeaderCell}>STATUS</th>
-                <th className={styles.tableHeaderCell}>BIAYA</th>
-                <th className={styles.tableHeaderCell}>SALDO AKHIR</th>
+                <th
+                  className={`${styles.tableHeaderCell} ${styles.tableHeaderCellRight}`}
+                >
+                  BIAYA
+                </th>
+                <th
+                  className={`${styles.tableHeaderCell} ${styles.tableHeaderCellRight}`}
+                >
+                  SALDO AKHIR
+                </th>
                 <th className={styles.tableHeaderCell}>KETERANGAN</th>
               </tr>
             </thead>
@@ -846,7 +851,7 @@ export function Dashboard() {
               {filteredTransactions.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={9}
                     style={{
                       textAlign: "center",
                       padding: "20px",
@@ -874,11 +879,7 @@ export function Dashboard() {
                       {transaction.cardId}
                     </td>
                     <td
-                      className={styles.tableCell}
-                      style={{
-                        color: "var(--text-subtle)",
-                        fontSize: "0.78rem",
-                      }}
+                      className={`${styles.tableCell} ${styles.tableCellMuted}`}
                     >
                       {transaction.nama || "-"}
                     </td>
@@ -935,7 +936,7 @@ export function Dashboard() {
                     </td>
                     {/* Biaya */}
                     <td
-                      className={styles.tableCell}
+                      className={`${styles.tableCell} ${styles.tableCellNumeric}`}
                       style={{
                         color:
                           transaction.biaya > 0
@@ -951,13 +952,12 @@ export function Dashboard() {
                     </td>
                     {/* Saldo Akhir */}
                     <td
-                      className={styles.tableCell}
+                      className={`${styles.tableCell} ${styles.tableCellNumeric}`}
                       style={{
                         color:
                           transaction.saldo_sesudah != null
                             ? "var(--accent-green)"
                             : "var(--text-muted)",
-                        fontSize: "0.78rem",
                         whiteSpace: "nowrap",
                       }}
                     >
@@ -967,17 +967,17 @@ export function Dashboard() {
                     </td>
                     {/* Keterangan */}
                     <td
-                      className={styles.tableCell}
+                      className={`${styles.tableCell} ${styles.tableCellNote}`}
                       style={{
                         color:
                           transaction.status === "ACCEPTED"
                             ? "var(--text-muted)"
                             : "var(--accent-red)",
-                        fontSize: "0.75rem",
-                        maxWidth: 220,
                       }}
                     >
-                      {transaction.keterangan || "-"}
+                      <span className={styles.tableCellNoteText}>
+                        {transaction.keterangan || "-"}
+                      </span>
                     </td>
                   </tr>
                 ))
