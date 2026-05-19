@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Search,
   Trash2,
+  Wallet,
   X,
 } from "lucide-react";
 import Head from "next/head";
@@ -20,7 +21,10 @@ interface RFIDCard {
   owner:  string;
   date:   string;
   status: string;
+  saldo:  number;
 }
+
+const formatRupiah = (n: number) => "Rp " + Number(n).toLocaleString("id-ID");
 
 const POLL_INTERVAL = 10_000;
 
@@ -43,6 +47,12 @@ const ManagementPage = () => {
   // ── Export ─────────────────────────────────────────────────────────────────
   const [exportStatus, setExportStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [exportError, setExportError]   = useState<string | null>(null);
+
+  // ── Top-up Modal ───────────────────────────────────────────────────────────
+  const [topupCard, setTopupCard]       = useState<RFIDCard | null>(null);
+  const [topupJumlah, setTopupJumlah]   = useState("");
+  const [isTopuping, setIsTopuping]     = useState(false);
+  const [topupError, setTopupError]     = useState<string | null>(null);
 
   // ── Fetch kartu ────────────────────────────────────────────────────────────
   const fetchCards = useCallback(async (showLoader = false) => {
@@ -161,6 +171,40 @@ const ManagementPage = () => {
       setModalError(err instanceof Error ? err.message : "Gagal menyimpan kartu.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // ── Top-up Saldo ──────────────────────────────────────────────────────────
+  const handleTopup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!topupCard) return;
+    const jumlah = parseInt(topupJumlah.replace(/\D/g, ""), 10);
+    if (!jumlah || jumlah <= 0) {
+      setTopupError("Masukkan nominal yang valid.");
+      return;
+    }
+    setIsTopuping(true);
+    setTopupError(null);
+    try {
+      const res = await fetch(`/api/cards/${encodeURIComponent(topupCard.uid)}`, {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ jumlah }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error ?? "Gagal mengupdate saldo.");
+      }
+      const { saldo: newSaldo } = await res.json();
+      setCards((prev) =>
+        prev.map((c) => c.uid === topupCard.uid ? { ...c, saldo: newSaldo } : c)
+      );
+      setTopupCard(null);
+      setTopupJumlah("");
+    } catch (err) {
+      setTopupError(err instanceof Error ? err.message : "Gagal mengupdate saldo.");
+    } finally {
+      setIsTopuping(false);
     }
   };
 
@@ -350,6 +394,7 @@ const ManagementPage = () => {
                 <th className={styles.tableHeader}>Card UID</th>
                 <th className={styles.tableHeader}>Owner</th>
                 <th className={styles.tableHeader}>Registered Date</th>
+                <th className={styles.tableHeader}>Saldo</th>
                 <th className={styles.tableHeader}>Status</th>
                 <th className={styles.tableHeader}>Actions</th>
               </tr>
@@ -357,14 +402,14 @@ const ManagementPage = () => {
             <tbody>
               {isLoading && cards.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: "center", padding: "2rem", color: "#64748b" }}>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "2rem", color: "#64748b" }}>
                     <Loader2 size={20} style={{ animation: "spin 1s linear infinite", display: "inline-block" }} />
                     <span style={{ marginLeft: "0.5rem" }}>Memuat data dari DynamoDB...</span>
                   </td>
                 </tr>
               ) : filteredCards.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: "center", padding: "2rem", color: "#64748b" }}>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "2rem", color: "#64748b" }}>
                     No cards found matching your search.
                   </td>
                 </tr>
@@ -376,15 +421,34 @@ const ManagementPage = () => {
                     <td className={styles.cell}>
                       <div className={styles.dateCell}><Calendar size={14} />{card.date}</div>
                     </td>
+                    <td className={styles.cell} style={{
+                      color: (card.saldo ?? 0) > 0 ? "#10b981" : "#f87171",
+                      fontWeight: 600, whiteSpace: "nowrap",
+                    }}>
+                      {formatRupiah(card.saldo ?? 0)}
+                    </td>
                     <td className={styles.cell}>
                       <span className={`${styles.statusBadge} ${card.status === "ACTIVE" ? styles.activeBadge : styles.inactiveBadge}`}>
                         {card.status}
                       </span>
                     </td>
                     <td className={styles.cell}>
-                      <button onClick={() => handleDelete(card.uid)} className={styles.deleteBtn}>
-                        <Trash2 size={16} />
-                      </button>
+                      <div style={{ display: "flex", gap: "6px" }}>
+                        <button
+                          onClick={() => { setTopupCard(card); setTopupJumlah(""); setTopupError(null); }}
+                          title="Top-up Saldo"
+                          style={{
+                            background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)",
+                            borderRadius: 6, padding: "6px 8px", cursor: "pointer", color: "#10b981",
+                            display: "flex", alignItems: "center",
+                          }}
+                        >
+                          <Wallet size={15} />
+                        </button>
+                        <button onClick={() => handleDelete(card.uid)} className={styles.deleteBtn}>
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -448,6 +512,75 @@ const ManagementPage = () => {
                   {isSaving
                     ? <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Menyimpan...</>
                     : "Save Card"
+                  }
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal Top-up Saldo ── */}
+        {topupCard && (
+          <div style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.8)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 1000,
+          }}>
+            <div style={{
+              backgroundColor: "#0f172a", padding: "2rem",
+              borderRadius: "12px", border: "1px solid #1e293b", width: "380px",
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1.5rem" }}>
+                <h3 style={{ color: "white", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                  <Wallet size={18} color="#10b981" /> Top-up Saldo
+                </h3>
+                <X size={20} color="#64748b" style={{ cursor: "pointer" }}
+                  onClick={() => { setTopupCard(null); setTopupError(null); }} />
+              </div>
+
+              <div style={{ marginBottom: "1rem", padding: "0.75rem 1rem", background: "rgba(255,255,255,0.04)", borderRadius: 8 }}>
+                <p style={{ color: "#94a3b8", fontSize: "0.78rem", margin: 0 }}>Kartu: <span style={{ color: "#00d4ff" }}>{topupCard.uid}</span></p>
+                <p style={{ color: "#94a3b8", fontSize: "0.78rem", margin: "4px 0 0" }}>Owner: <span style={{ color: "white" }}>{topupCard.owner}</span></p>
+                <p style={{ color: "#94a3b8", fontSize: "0.78rem", margin: "4px 0 0" }}>Saldo saat ini: <span style={{ color: "#10b981", fontWeight: 600 }}>{formatRupiah(topupCard.saldo ?? 0)}</span></p>
+              </div>
+
+              {topupError && (
+                <div style={{
+                  background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+                  borderRadius: "8px", padding: "0.75rem", marginBottom: "1rem",
+                  color: "#f87171", fontSize: "0.8rem",
+                }}>⚠️ {topupError}</div>
+              )}
+
+              <form onSubmit={handleTopup} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div>
+                  <label style={{ color: "#94a3b8", fontSize: "0.8rem", display: "block", marginBottom: "0.5rem" }}>Nominal Top-up (Rp)</label>
+                  <input
+                    required
+                    type="number"
+                    min="1000"
+                    step="1000"
+                    className={styles.searchInput}
+                    placeholder="Contoh: 50000"
+                    value={topupJumlah}
+                    onChange={(e) => setTopupJumlah(e.target.value)}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isTopuping}
+                  style={{
+                    width: "100%", padding: "0.9rem", borderRadius: 8,
+                    border: "1px solid rgba(16,185,129,0.3)",
+                    background: isTopuping ? "#1e293b" : "rgba(16,185,129,0.2)",
+                    color: "#10b981", fontWeight: 600, cursor: isTopuping ? "not-allowed" : "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  } as React.CSSProperties}
+                >
+                  {isTopuping
+                    ? <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Memproses...</>
+                    : <><Wallet size={16} /> Top-up Saldo</>
                   }
                 </button>
               </form>

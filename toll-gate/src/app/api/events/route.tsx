@@ -72,8 +72,9 @@ export async function GET() {
     const accepted = items.filter((i) => i.status === "DITERIMA");
     const masuk = accepted.filter((i) => i.tipe_gate === "MASUK").length;
     const keluar = accepted.filter((i) => i.tipe_gate === "KELUAR").length;
+    // Revenue dihitung dari KELUAR karena pembayaran terjadi saat exit
     const totalRevenue = accepted
-      .filter((i) => i.tipe_gate === "MASUK")
+      .filter((i) => i.tipe_gate === "KELUAR")
       .reduce((sum, i) => sum + (Number(i.biaya) || tollFee), 0);
 
     const sorted = items.sort(
@@ -85,8 +86,9 @@ export async function GET() {
       waktu: item.waktu,
       status: item.status,
       tipe_gate: item.tipe_gate,
+      nama: item.nama ?? null,
       biaya:
-        item.status === "DITERIMA" && item.tipe_gate === "MASUK"
+        item.status === "DITERIMA" && item.tipe_gate === "KELUAR"
           ? Number(item.biaya) || tollFee
           : 0,
       saldo_sebelum: item.saldo_sebelum ?? null,
