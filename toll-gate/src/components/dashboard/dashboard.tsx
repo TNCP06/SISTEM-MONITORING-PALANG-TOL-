@@ -7,6 +7,8 @@ import {
   Car,
   ArrowRight,
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
   Download,
   Search,
   Filter,
@@ -68,6 +70,10 @@ export function Dashboard() {
   const [filterMonth, setFilterMonth] = useState(""); // "YYYY-MM" or ""
   const [filterStatus, setFilterStatus] = useState<"ALL" | "ACCEPTED" | "REJECTED">("ALL");
 
+  // ---- Pagination state ----
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [currentPage, setCurrentPage] = useState(1);
+
   const getTransactionId = (item: any) => {
     const timestamp = new Date(item.waktu).getTime();
     const bucket = Math.floor(timestamp / 5000); // 5 second window to avoid hold duplicates
@@ -75,20 +81,20 @@ export function Dashboard() {
   };
 
   const convertItem = (item: any): Transaction => {
-    const dt = new Date(item.waktu);
+    const waktuStr = (item.waktu ?? "").toString();
     return {
       id: getTransactionId(item),
       cardId: item.uid,
       nama: item.nama || "",
-      date: dt.toISOString().split("T")[0],
-      time: dt.toLocaleTimeString("id-ID", { hour12: false }),
-      month: dt.toISOString().slice(0, 7),
+      date: waktuStr.slice(0, 10),   // "YYYY-MM-DD" langsung dari string, hindari UTC offset
+      time: waktuStr.slice(11, 19),  // "HH:MM:SS"
+      month: waktuStr.slice(0, 7),   // "YYYY-MM"
       status: item.status === "DITERIMA" ? "ACCEPTED" : "REJECTED",
       gate: item.tipe_gate === "MASUK" ? "ENTRY" : "EXIT",
       biaya: Number(item.biaya) || 0,
       saldo_sesudah: item.saldo_sesudah != null ? Number(item.saldo_sesudah) : null,
       keterangan: item.keterangan || deriveKeterangan(item),
-      timestamp: dt.getTime(),
+      timestamp: new Date(waktuStr).getTime(),
     };
   };
 
@@ -270,6 +276,21 @@ export function Dashboard() {
       return true;
     });
   }, [transactions, searchCard, filterMonth, filterStatus]);
+
+  // Reset ke halaman 1 saat filter atau jumlah baris berubah
+  useEffect(() => { setCurrentPage(1); }, [searchCard, filterMonth, filterStatus, rowsPerPage]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / rowsPerPage));
+  const paginatedTransactions = filteredTransactions.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage,
+  );
+
+  const formatMonth = (m: string) => {
+    const names = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    const parts = m.split("-");
+    return `${names[parseInt(parts[1], 10) - 1]} ${parts[0]}`;
+  };
 
   const exportCSV = () => {
     const rows = filteredTransactions;
@@ -504,7 +525,7 @@ export function Dashboard() {
               <option value="">Semua Bulan</option>
               {availableMonths.map((m) => (
                 <option key={m} value={m} style={{ background: "#1e293b" }}>
-                  {new Date(m + "-01").toLocaleDateString("id-ID", { year: "numeric", month: "long" })}
+                  {formatMonth(m)}
                 </option>
               ))}
             </select>
@@ -565,7 +586,18 @@ export function Dashboard() {
 
         {/* Table */}
         <div style={{ overflowX: "auto" }}>
-          <table className={styles.transactionTable}>
+          <table className={styles.transactionTable} style={{ tableLayout: "fixed" }}>
+            <colgroup>
+              <col style={{ width: "155px" }} />
+              <col style={{ width: "105px" }} />
+              <col style={{ width: "95px" }} />
+              <col style={{ width: "100px" }} />
+              <col style={{ width: "90px" }} />
+              <col style={{ width: "130px" }} />
+              <col style={{ width: "110px" }} />
+              <col style={{ width: "120px" }} />
+              <col />
+            </colgroup>
             <thead>
               <tr>
                 <th className={styles.tableHeaderCell}>CARD ID</th>
@@ -589,7 +621,7 @@ export function Dashboard() {
                   </td>
                 </tr>
               ) : (
-                filteredTransactions.map((transaction) => (
+                paginatedTransactions.map((transaction) => (
                   <tr
                     key={transaction.id}
                     className={`${styles.tableBodyRow} ${
@@ -664,6 +696,66 @@ export function Dashboard() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          marginTop: "1rem", flexWrap: "wrap", gap: "0.75rem",
+        }}>
+          {/* Rows per page */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ color: "#64748b", fontSize: "0.78rem" }}>Baris per halaman:</span>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => setRowsPerPage(Number(e.target.value))}
+              style={{
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 6, color: "#e2e8f0", fontSize: "0.78rem", padding: "4px 8px",
+                outline: "none", cursor: "pointer",
+              }}
+            >
+              {[10, 25, 50, 100].map((n) => (
+                <option key={n} value={n} style={{ background: "#1e293b" }}>{n}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Page info + navigation */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ color: "#64748b", fontSize: "0.78rem" }}>
+              {filteredTransactions.length === 0 ? "0 data" : (
+                `${(currentPage - 1) * rowsPerPage + 1}–${Math.min(currentPage * rowsPerPage, filteredTransactions.length)} dari ${filteredTransactions.length}`
+              )}
+            </span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              style={{
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 6, color: currentPage === 1 ? "#334155" : "#94a3b8",
+                padding: "4px 8px", cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                display: "flex", alignItems: "center",
+              }}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span style={{ color: "#94a3b8", fontSize: "0.78rem", minWidth: "60px", textAlign: "center" }}>
+              {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              style={{
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 6, color: currentPage === totalPages ? "#334155" : "#94a3b8",
+                padding: "4px 8px", cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                display: "flex", alignItems: "center",
+              }}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
