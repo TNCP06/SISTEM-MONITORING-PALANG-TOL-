@@ -971,7 +971,7 @@ export function Dashboard() {
                       style={{
                         color:
                           transaction.status === "ACCEPTED"
-                            ? "var(--text-muted)"
+                            ? "var(--accent-green)"
                             : "var(--accent-red)",
                       }}
                     >
