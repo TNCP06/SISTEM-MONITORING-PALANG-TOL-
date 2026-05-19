@@ -1,17 +1,26 @@
-import { BarChart2, Database, LayoutDashboard, Settings } from "lucide-react";
+import { BarChart2, Database, LayoutDashboard, Moon, Sun } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import styles from "./Sidebar.module.css";
 
-const Sidebar = () => {
+type SidebarProps = {
+  theme: "light" | "dark";
+  onToggleTheme: () => void;
+};
+
+const Sidebar = ({ theme, onToggleTheme }: SidebarProps) => {
   const router = useRouter();
+  const isLight = theme === "light";
+  const logoSrc = isLight
+    ? "/logo-horizontal-light.svg"
+    : "/logo-horizontal.svg";
 
   return (
     <aside className={styles.sidebar}>
       <div className={styles.logoSection}>
         <Image
-          src="/logo-horizontal.svg"
+          src={logoSrc}
           alt="Toll Gate Logo"
           width={500}
           height={70}
@@ -51,9 +60,16 @@ const Sidebar = () => {
           <span className={styles.statusLabel}>SYSTEM STATUS</span>
           <span className={styles.statusText}>ONLINE</span>
         </div>
-        <div className={styles.footerIcon}>
-          <Settings size={18} />
-        </div>
+        <button
+          type="button"
+          className={styles.themeToggle}
+          onClick={onToggleTheme}
+          aria-label={isLight ? "Switch to dark mode" : "Switch to light mode"}
+          aria-pressed={isLight}
+          title={isLight ? "Switch to dark mode" : "Switch to light mode"}
+        >
+          {isLight ? <Moon size={18} /> : <Sun size={18} />}
+        </button>
       </div>
     </aside>
   );

@@ -1,7 +1,7 @@
 .container {
   min-height: 100vh;
-  background-color: #0b1426;
-  color: #f8fafc;
+  background-color: var(--bg-main);
+  color: var(--text-main);
 }
 
 .mainContent {
@@ -18,14 +18,14 @@
 .headerLeft h1 {
   font-size: 2rem;
   font-weight: 800;
-  color: white;
+  color: var(--text-strong);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   margin: 0;
 }
 
 .headerLeft p {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.95rem;
   margin-top: 0.5rem;
 }
@@ -33,7 +33,7 @@
 .trafficStatus {
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  border: 1px solid #1e293b;
+  border: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -59,12 +59,12 @@
 }
 
 .trafficSmooth .statusIndicator {
-  background-color: #00d4ff;
-  box-shadow: 0 0 10px #00d4ff;
+  background-color: var(--accent-cyan);
+  box-shadow: 0 0 10px var(--accent-cyan);
 }
 
 .trafficSmooth .statusText {
-  color: #00d4ff;
+  color: var(--accent-cyan);
 }
 
 .trafficModerate {
@@ -73,11 +73,11 @@
 }
 
 .trafficModerate .statusIndicator {
-  background-color: #f59e0b;
+  background-color: var(--accent-yellow);
 }
 
 .trafficModerate .statusText {
-  color: #f59e0b;
+  color: var(--accent-yellow);
 }
 
 .trafficCongested {
@@ -86,11 +86,11 @@
 }
 
 .trafficCongested .statusIndicator {
-  background-color: #ec4899;
+  background-color: var(--accent-magenta);
 }
 
 .trafficCongested .statusText {
-  color: #ec4899;
+  color: var(--accent-magenta);
 }
 
 .statsGrid {
@@ -101,8 +101,8 @@
 }
 
 .statCard {
-  background: #0f172a;
-  border: 1px solid #1e293b;
+  background: var(--surface-1);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 1.5rem;
   display: flex;
@@ -114,7 +114,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -128,16 +128,16 @@
 }
 
 .textCyan {
-  color: #00d4ff;
+  color: var(--accent-cyan);
 }
 .textMagenta {
-  color: #ec4899;
+  color: var(--accent-magenta);
 }
 .textGreen {
-  color: #10b981;
+  color: var(--accent-green);
 }
 .textYellow {
-  color: #f59e0b;
+  color: var(--accent-yellow);
 }
 
 .gateGrid {
@@ -148,20 +148,20 @@
 }
 
 .gateCard {
-  background: #0f172a;
-  border: 1px solid #1e293b;
+  background: var(--surface-1);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
 }
 
 .gateHeader {
-  background: #1a2d4a;
+  background: var(--surface-2);
   padding: 1rem;
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .gateTitle {
-  color: white;
+  color: var(--text-strong);
   font-size: 0.9rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -187,7 +187,7 @@
 }
 
 .gateStatusLabel {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.75rem;
   text-transform: uppercase;
   margin: 0;
@@ -208,13 +208,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid rgba(100, 116, 139, 0.3);
-  background: #1e293b;
+  border: 2px solid var(--border-color);
+  background: var(--surface-3);
   transition: all 0.3s ease;
 }
 
 .gateIndicatorActive {
-  border: 2px solid #00d4ff;
+  border: 2px solid var(--accent-cyan);
   background: rgba(0, 212, 255, 0.25);
   box-shadow:
     0 0 12px rgba(0, 212, 255, 0.4),
@@ -226,16 +226,16 @@
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background-color: #475569;
+  background-color: var(--text-faint);
   transition: all 0.3s ease;
 }
 
 .gateIndicatorDotActive {
   width: 2.2rem;
   height: 2.2rem;
-  background-color: #00d4ff;
+  background-color: var(--accent-cyan);
   box-shadow:
-    0 0 16px #00d4ff,
+    0 0 16px var(--accent-cyan),
     0 0 8px rgba(0, 212, 255, 0.6);
 }
 
@@ -259,8 +259,8 @@
 }
 
 .gateBtnOpen {
-  border-color: #00d4ff;
-  color: #00d4ff;
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
 }
 
 .gateBtnOpen:hover:not(:disabled) {
@@ -268,8 +268,8 @@
 }
 
 .gateBtnClose {
-  border-color: #ec4899;
-  color: #ec4899;
+  border-color: var(--accent-magenta);
+  color: var(--accent-magenta);
 }
 
 .gateBtnClose:hover:not(:disabled) {
@@ -282,23 +282,23 @@
 }
 
 .transactionCard {
-  background: #0f172a;
-  border: 1px solid #1e293b;
+  background: var(--surface-1);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
 }
 
 .transactionHeader {
-  background: #1a2d4a;
+  background: var(--surface-2);
   padding: 1rem;
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .transactionTitle {
-  color: white;
+  color: var(--text-strong);
   font-size: 0.9rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -316,14 +316,14 @@
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background-color: #10b981;
+  background-color: var(--accent-green);
   animation: pulse 2s infinite;
-  box-shadow: 0 0 8px #10b981;
+  box-shadow: 0 0 8px var(--accent-green);
 }
 
 .realTimeText {
   font-size: 0.7rem;
-  color: #10b981;
+  color: var(--accent-green);
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -337,17 +337,17 @@
 }
 
 .tableScrollContainer::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--scrollbar-track);
   border-radius: 3px;
 }
 
 .tableScrollContainer::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.4);
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 .tableScrollContainer::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.7);
+  background: var(--scrollbar-thumb-hover);
 }
 
 .transactionTable {
@@ -359,15 +359,15 @@
   padding: 1rem;
   text-align: left;
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-muted);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .tableBodyRow {
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid var(--border-color);
   transition: background-color 0.3s ease;
 }
 
@@ -392,7 +392,7 @@
 }
 
 .tableCellCardId {
-  color: #00d4ff;
+  color: var(--accent-cyan);
   font-weight: 500;
   font-size: 0.9rem;
   font-family: monospace;
@@ -404,15 +404,15 @@
   gap: 0.4rem;
   padding: 0.25rem 0.75rem;
   border-radius: 6px;
-  background: #1a2d4a;
-  color: #64748b;
+  background: var(--surface-2);
+  color: var(--text-muted);
   font-weight: 700;
   font-size: 0.75rem;
   text-transform: uppercase;
 }
 
 .tableCellTime {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.9rem;
   font-family: monospace;
 }
