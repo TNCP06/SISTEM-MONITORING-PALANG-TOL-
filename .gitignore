@@ -1,0 +1,6 @@
+# AI tools / local config
+.claude/
+CLAUDE.md
+
+# Backend script (contains credentials, deploy via EC2 only)
+subscriber.py
