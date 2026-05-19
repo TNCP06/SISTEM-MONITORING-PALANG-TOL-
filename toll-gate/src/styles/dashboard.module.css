@@ -353,10 +353,11 @@
 .transactionTable {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .tableHeaderCell {
-  padding: 1rem;
+  padding: 1rem 1.1rem;
   text-align: left;
   font-size: 0.75rem;
   color: var(--text-muted);
@@ -364,6 +365,10 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 1px solid var(--border-color);
+}
+
+.tableHeaderCellRight {
+  text-align: right;
 }
 
 .tableBodyRow {
@@ -388,7 +393,39 @@
 }
 
 .tableCell {
-  padding: 1rem;
+  padding: 1rem 1.1rem;
+  vertical-align: middle;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--text-main);
+}
+
+.tableCellMuted {
+  color: var(--text-subtle);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.tableCellNumeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tableCellNote {
+  vertical-align: middle;
+}
+
+.tableCellNoteText {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  word-break: break-word;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 .tableCellCardId {
@@ -396,6 +433,7 @@
   font-weight: 500;
   font-size: 0.9rem;
   font-family: monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 .gateTag {
@@ -413,8 +451,10 @@
 
 .tableCellTime {
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-family: monospace;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .statusBadge {
@@ -423,6 +463,88 @@
   gap: 0.5rem;
   font-weight: 700;
   font-family: monospace;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.paginationBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.paginationGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.paginationLabel {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.paginationSelect {
+  background: var(--input-bg-soft);
+  border: 1px solid var(--input-border-strong);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 0.78rem;
+  padding: 6px 10px;
+  outline: none;
+  cursor: pointer;
+}
+
+.paginationNav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.paginationRange {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.paginationInfo {
+  color: var(--text-subtle);
+  font-size: 0.78rem;
+  min-width: 68px;
+  text-align: center;
+  padding: 0.25rem 0.6rem;
+  background: var(--input-bg-soft);
+  border: 1px solid var(--input-border-strong);
+  border-radius: 999px;
+}
+
+.paginationButton {
+  background: var(--input-bg-soft);
+  border: 1px solid var(--input-border-strong);
+  border-radius: 8px;
+  color: var(--text-subtle);
+  padding: 6px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.paginationButton:hover:not(:disabled) {
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  background: var(--chip-active-bg);
+}
+
+.paginationButton:disabled {
+  color: var(--text-faint);
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 @keyframes pulse {

@@ -459,7 +459,7 @@ export function Dashboard() {
           </div>
           <p
             className={`${styles.statValue} ${styles.textYellow}`}
-            style={{ fontSize: "1.1rem" }}
+            style={{ fontSize: "2.2rem" }}
           >
             {formatRupiah(totalRevenue)}
           </p>
@@ -814,19 +814,16 @@ export function Dashboard() {
 
         {/* Table */}
         <div className={styles.tableScrollContainer}>
-          <table
-            className={styles.transactionTable}
-            style={{ tableLayout: "fixed" }}
-          >
+          <table className={styles.transactionTable}>
             <colgroup>
-              <col style={{ width: "155px" }} />
+              <col style={{ width: "170px" }} />
+              <col style={{ width: "140px" }} />
               <col style={{ width: "105px" }} />
-              <col style={{ width: "95px" }} />
-              <col style={{ width: "100px" }} />
-              <col style={{ width: "90px" }} />
-              <col style={{ width: "130px" }} />
-              <col style={{ width: "110px" }} />
               <col style={{ width: "120px" }} />
+              <col style={{ width: "95px" }} />
+              <col style={{ width: "140px" }} />
+              <col style={{ width: "120px" }} />
+              <col style={{ width: "130px" }} />
               <col />
             </colgroup>
             <thead>
@@ -837,8 +834,16 @@ export function Dashboard() {
                 <th className={styles.tableHeaderCell}>TANGGAL</th>
                 <th className={styles.tableHeaderCell}>WAKTU</th>
                 <th className={styles.tableHeaderCell}>STATUS</th>
-                <th className={styles.tableHeaderCell}>BIAYA</th>
-                <th className={styles.tableHeaderCell}>SALDO AKHIR</th>
+                <th
+                  className={`${styles.tableHeaderCell} ${styles.tableHeaderCellRight}`}
+                >
+                  BIAYA
+                </th>
+                <th
+                  className={`${styles.tableHeaderCell} ${styles.tableHeaderCellRight}`}
+                >
+                  SALDO AKHIR
+                </th>
                 <th className={styles.tableHeaderCell}>KETERANGAN</th>
               </tr>
             </thead>
@@ -846,7 +851,7 @@ export function Dashboard() {
               {filteredTransactions.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={9}
                     style={{
                       textAlign: "center",
                       padding: "20px",
@@ -874,11 +879,7 @@ export function Dashboard() {
                       {transaction.cardId}
                     </td>
                     <td
-                      className={styles.tableCell}
-                      style={{
-                        color: "var(--text-subtle)",
-                        fontSize: "0.78rem",
-                      }}
+                      className={`${styles.tableCell} ${styles.tableCellMuted}`}
                     >
                       {transaction.nama || "-"}
                     </td>
@@ -935,7 +936,7 @@ export function Dashboard() {
                     </td>
                     {/* Biaya */}
                     <td
-                      className={styles.tableCell}
+                      className={`${styles.tableCell} ${styles.tableCellNumeric}`}
                       style={{
                         color:
                           transaction.biaya > 0
@@ -951,13 +952,12 @@ export function Dashboard() {
                     </td>
                     {/* Saldo Akhir */}
                     <td
-                      className={styles.tableCell}
+                      className={`${styles.tableCell} ${styles.tableCellNumeric}`}
                       style={{
                         color:
                           transaction.saldo_sesudah != null
                             ? "var(--accent-green)"
                             : "var(--text-muted)",
-                        fontSize: "0.78rem",
                         whiteSpace: "nowrap",
                       }}
                     >
@@ -967,17 +967,17 @@ export function Dashboard() {
                     </td>
                     {/* Keterangan */}
                     <td
-                      className={styles.tableCell}
+                      className={`${styles.tableCell} ${styles.tableCellNote}`}
                       style={{
                         color:
                           transaction.status === "ACCEPTED"
-                            ? "var(--text-muted)"
+                            ? "var(--accent-green)"
                             : "var(--accent-red)",
-                        fontSize: "0.75rem",
-                        maxWidth: 220,
                       }}
                     >
-                      {transaction.keterangan || "-"}
+                      <span className={styles.tableCellNoteText}>
+                        {transaction.keterangan || "-"}
+                      </span>
                     </td>
                   </tr>
                 ))
@@ -987,34 +987,14 @@ export function Dashboard() {
         </div>
 
         {/* Pagination Controls */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginTop: "1rem",
-            flexWrap: "wrap",
-            gap: "0.75rem",
-          }}
-        >
+        <div className={styles.paginationBar}>
           {/* Rows per page */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>
-              Baris per halaman:
-            </span>
+          <div className={styles.paginationGroup}>
+            <span className={styles.paginationLabel}>Baris per halaman:</span>
             <select
               value={rowsPerPage}
               onChange={(e) => setRowsPerPage(Number(e.target.value))}
-              style={{
-                background: "var(--input-bg-soft)",
-                border: "1px solid var(--input-border-strong)",
-                borderRadius: 6,
-                color: "var(--text-main)",
-                fontSize: "0.78rem",
-                padding: "4px 8px",
-                outline: "none",
-                cursor: "pointer",
-              }}
+              className={styles.paginationSelect}
             >
               {[10, 25, 50, 100].map((n) => (
                 <option
@@ -1032,8 +1012,8 @@ export function Dashboard() {
           </div>
 
           {/* Page info + navigation */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ color: "var(--text-muted)", fontSize: "0.78rem" }}>
+          <div className={styles.paginationNav}>
+            <span className={styles.paginationRange}>
               {filteredTransactions.length === 0
                 ? "0 data"
                 : `${(currentPage - 1) * rowsPerPage + 1}–${Math.min(currentPage * rowsPerPage, filteredTransactions.length)} dari ${filteredTransactions.length}`}
@@ -1041,48 +1021,17 @@ export function Dashboard() {
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              style={{
-                background: "var(--input-bg-soft)",
-                border: "1px solid var(--input-border-strong)",
-                borderRadius: 6,
-                color:
-                  currentPage === 1
-                    ? "var(--text-faint)"
-                    : "var(--text-subtle)",
-                padding: "4px 8px",
-                cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-              }}
+              className={styles.paginationButton}
             >
               <ChevronLeft size={16} />
             </button>
-            <span
-              style={{
-                color: "var(--text-subtle)",
-                fontSize: "0.78rem",
-                minWidth: "60px",
-                textAlign: "center",
-              }}
-            >
+            <span className={styles.paginationInfo}>
               {currentPage} / {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              style={{
-                background: "var(--input-bg-soft)",
-                border: "1px solid var(--input-border-strong)",
-                borderRadius: 6,
-                color:
-                  currentPage === totalPages
-                    ? "var(--text-faint)"
-                    : "var(--text-subtle)",
-                padding: "4px 8px",
-                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-              }}
+              className={styles.paginationButton}
             >
               <ChevronRight size={16} />
             </button>
