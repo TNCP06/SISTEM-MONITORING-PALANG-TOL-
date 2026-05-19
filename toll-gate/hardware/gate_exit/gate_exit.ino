@@ -151,9 +151,9 @@ void responDiterima(JsonDocument& doc) {
   buzzerOK();
 
   tampilLCD("Terima kasih!", nama);
-  delay(1000);
+  delay(500);
   tampilLCD("Sisa Saldo:", "Rp " + String(saldo_sesudah));
-  delay(1000);
+  delay(500);
 
   bukaPalang();
   tungguMobilLewat();
@@ -175,14 +175,14 @@ void responDitolak(JsonDocument& doc) {
     tampilLCD("Belum Tercatat", "Masuk!");
   } else if (alasan == "SALDO_TIDAK_CUKUP") {
     int saldo = doc["saldo"] | 0;
-    tampilLCD("Saldo Kurang", "Rp " + String(saldo));
+    tampilLCD("Saldo Kurang!", "Rp " + String(saldo));
   } else if (alasan == "KARTU_TIDAK_DIKENAL") {
     tampilLCD("Kartu Tidak", "Terdaftar");
   } else {
     tampilLCD("Akses Ditolak", alasan.substring(0, 16));
   }
 
-  kedipMerah(3);
+  kedipMerah(2);
   nyalakanWarna(0, 0, 255); // Balik ke biru standby
   tampilanStandby();
 }
@@ -204,7 +204,7 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     if (action == "OPEN") {
       Serial.println("[CONTROL] Membuka palang...");
       nyalakanWarna(0, 255, 0);
-      tampilLCD("Manual Control", "Gate Opening");
+      tampilLCD("Manual Control", "Palang Membuka");
       bukaPalang();
       delay(1000);
       tampilanStandby();
@@ -212,7 +212,7 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     } else if (action == "CLOSE") {
       Serial.println("[CONTROL] Menutup palang...");
       nyalakanWarna(255, 0, 0);
-      tampilLCD("Manual Control", "Gate Closing");
+      tampilLCD("Manual Control", "Palang Menutup");
       tutupPalang();
       delay(1000);
       tampilanStandby();
@@ -313,7 +313,7 @@ void bacaRFID() {
 
   // Cek jarak kendaraan
   if (jarakTerakhir == 0 || jarakTerakhir > 15) {
-    tampilLCD("Tidak ada", "kendaraan");
+    tampilLCD("Tidak ada", "Kendaraan");
     kedipMerah(2);
     delay(500);
     tampilanStandby();
@@ -335,7 +335,7 @@ void bacaRFID() {
   waktuKirim       = millis();
 
   nyalakanWarna(0, 0, 255);
-  tampilLCD("Memproses...", uid);
+  tampilLCD("Memproses...", "Harap Tunggu...");
 
   rfid.PICC_HaltA();
 }
