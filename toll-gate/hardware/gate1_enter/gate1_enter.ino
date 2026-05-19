@@ -148,9 +148,9 @@ void responDiterima(JsonDocument& doc) {
   buzzerOK();
 
   tampilLCD("Selamat Datang!", nama);
-  delay(250);
-  tampilLCD("Saldo:", "Rp " + String(saldo));
-  delay(250);
+  delay(400);
+  tampilLCD("Saldo Anda:", "Rp " + String(saldo));
+  delay(400);
 
   bukaPalang();
   tungguMobilLewat();
@@ -179,7 +179,7 @@ void responDitolak(JsonDocument& doc) {
     tampilLCD("Akses Ditolak", alasan.substring(0, 16));
   }
 
-  kedipMerah(3);
+  kedipMerah(2);
   nyalakanWarna(0, 0, 255); // Balik ke biru standby
   tampilanStandby();
 }
@@ -208,18 +208,18 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     if (action == "OPEN") {
       Serial.println("[CONTROL] ✓ Opening gate...");
       nyalakanWarna(0, 255, 0);
-      tampilLCD("Manual Control", "Gate Opening");
+      tampilLCD("Manual Control", "Palang Membuka");
       bukaPalang();
-      delay(2000);
+      delay(1000);
       tampilanStandby();
       nyalakanWarna(0, 0, 255);
       Serial.println("[CONTROL] ✓ Gate opened");
     } else if (action == "CLOSE") {
       Serial.println("[CONTROL] ✓ Closing gate...");
       nyalakanWarna(255, 0, 0);
-      tampilLCD("Manual Control", "Gate Closing");
+      tampilLCD("Manual Control", "Palang Menutup");
       tutupPalang();
-      delay(2000);
+      delay(1000);
       tampilanStandby();
       nyalakanWarna(0, 0, 255);
       Serial.println("[CONTROL] ✓ Gate closed");
@@ -324,7 +324,7 @@ void bacaRFID() {
 
   // Cek kendaraan
   if (jarakTerakhir == 0 || jarakTerakhir > 20) {
-    tampilLCD("Tidak ada", "kendaraan");
+    tampilLCD("Tidak ada", "Kendaraan");
     kedipMerah(2);
     delay(500);
     tampilanStandby();
@@ -346,7 +346,7 @@ void bacaRFID() {
   waktuKirim       = millis();
 
   nyalakanWarna(0, 0, 255); // Biru "Memproses"
-  tampilLCD("Memproses...", uid);
+  tampilLCD("Memproses...", "Harap Tunggu...");
 
   rfid.PICC_HaltA();
 }
