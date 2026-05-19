@@ -699,16 +699,36 @@ const AnalyticsPage = () => {
   const defaultStart = daysAgo(6);
   const defaultEnd = todayStr();
 
-  const [volumeStartDate, setVolumeStartDate] = useState(defaultStart);
-  const [volumeEndDate, setVolumeEndDate] = useState(defaultEnd);
-  const [validationStartDate, setValidationStartDate] = useState(defaultStart);
-  const [validationEndDate, setValidationEndDate] = useState(defaultEnd);
+  // ── Single date range for real-data charts ────────────────────────────────
+  const [startDate, setStartDate] = useState(defaultStart);
+  const [endDate, setEndDate]     = useState(defaultEnd);
+
+  // ── Keep separate date for mock charts ────────────────────────────────────
   const [latencyStartDate, setLatencyStartDate] = useState(defaultStart);
-  const [latencyEndDate, setLatencyEndDate] = useState(defaultEnd);
+  const [latencyEndDate, setLatencyEndDate]     = useState(defaultEnd);
   const [heatmapStartDate, setHeatmapStartDate] = useState(defaultStart);
-  const [heatmapEndDate, setHeatmapEndDate] = useState(defaultEnd);
-  const [revenueStartDate, setRevenueStartDate] = useState(defaultStart);
-  const [revenueEndDate, setRevenueEndDate] = useState(defaultEnd);
+  const [heatmapEndDate, setHeatmapEndDate]     = useState(defaultEnd);
+
+  // ── Analytics data from API ────────────────────────────────────────────────
+  const [analyticsData, setAnalyticsData] = useState<{
+    trafficVolume: { jam: string; masuk: number; keluar: number }[];
+    accessValidation: { name: string; value: number }[];
+    revenueHarian: { tanggal: string; revenue: number }[];
+    stats: {
+      totalMasuk: number; totalKeluar: number; diDalam: number;
+      totalRevenue: number; totalTransaksi: number; successRate: number;
+    };
+  } | null>(null);
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
+
+  useEffect(() => {
+    setIsLoadingAnalytics(true);
+    fetch(`/api/analytics?from=${startDate}&to=${endDate}`)
+      .then((r) => r.json())
+      .then((data) => { if (!data.error) setAnalyticsData(data); })
+      .catch(() => {})
+      .finally(() => setIsLoadingAnalytics(false));
+  }, [startDate, endDate]);
 
   return (
     <div className={styles.container}>
@@ -724,27 +744,27 @@ const AnalyticsPage = () => {
           </p>
         </header>
 
-        {/* Top Stats */}
+        {/* Top Stats — data real dari API */}
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
             <div className={styles.statHeader}>
               <TrendingUp size={16} />
-              <span>Peak Hour</span>
+              <span>Total Masuk</span>
             </div>
             <div className={`${styles.statValue} ${styles.textCyan}`}>
-              16:00
+              {isLoadingAnalytics ? "—" : (analyticsData?.stats.totalMasuk ?? 0)}
             </div>
-            <div className={styles.statMeta}>55 vehicles/hour</div>
+            <div className={styles.statMeta}>Kendaraan masuk</div>
           </div>
           <div className={styles.statCard}>
             <div className={styles.statHeader}>
               <Activity size={16} />
-              <span>Avg Travel Time</span>
+              <span>Total Keluar</span>
             </div>
             <div className={`${styles.statValue} ${styles.textGreen}`}>
-              2m 32s
+              {isLoadingAnalytics ? "—" : (analyticsData?.stats.totalKeluar ?? 0)}
             </div>
-            <div className={styles.statMeta}>Average toll duration</div>
+            <div className={styles.statMeta}>Kendaraan keluar</div>
           </div>
           <div className={styles.statCard}>
             <div className={styles.statHeader}>
@@ -752,23 +772,23 @@ const AnalyticsPage = () => {
               <span>Success Rate</span>
             </div>
             <div className={`${styles.statValue} ${styles.textPurple}`}>
-              92.3%
+              {isLoadingAnalytics ? "—" : `${analyticsData?.stats.successRate ?? 0}%`}
             </div>
             <div className={styles.statMeta}>Acceptance ratio</div>
           </div>
           <div className={styles.statCard}>
             <div className={styles.statHeader}>
               <Clock size={16} />
-              <span>TOTAL Revenue</span>
+              <span>Total Revenue</span>
             </div>
-            <div className={`${styles.statValue} ${styles.textYellow}`}>
-              Rp. 500,000
+            <div className={`${styles.statValue} ${styles.textYellow}`} style={{ fontSize: "1.1rem" }}>
+              {isLoadingAnalytics ? "—" : `Rp ${(analyticsData?.stats.totalRevenue ?? 0).toLocaleString("id-ID")}`}
             </div>
-            <div className={styles.statMeta}>Per day</div>
+            <div className={styles.statMeta}>Dari gate keluar</div>
           </div>
         </div>
 
-        {/* Volume Chart */}
+        {/* Volume Chart — data real per jam */}
         <section className={styles.chartSection}>
           <div
             style={{
@@ -783,25 +803,19 @@ const AnalyticsPage = () => {
               Traffic Volume - Hourly Breakdown
             </h2>
             <ExportButton
-              data={getFilteredData(volumeData, volumeStartDate, volumeEndDate)}
+              data={analyticsData?.trafficVolume ?? []}
               filename="traffic-volume"
             />
           </div>
           <DateFilterControl
-            startDate={volumeStartDate}
-            setStartDate={setVolumeStartDate}
-            endDate={volumeEndDate}
-            setEndDate={setVolumeEndDate}
+            startDate={startDate}
+            setStartDate={setStartDate}
+            endDate={endDate}
+            setEndDate={setEndDate}
           />
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={getFilteredData(
-                  volumeData,
-                  volumeStartDate,
-                  volumeEndDate,
-                )}
-              >
+              <AreaChart data={analyticsData?.trafficVolume ?? []}>
                 <defs>
                   <linearGradient id="colorEntry" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
@@ -818,7 +832,7 @@ const AnalyticsPage = () => {
                   vertical={false}
                 />
                 <XAxis
-                  dataKey="name"
+                  dataKey="jam"
                   stroke="#64748b"
                   fontSize={10}
                   axisLine={false}
@@ -840,19 +854,21 @@ const AnalyticsPage = () => {
                 />
                 <Area
                   type="monotone"
-                  dataKey="entry"
+                  dataKey="masuk"
                   stroke="#10b981"
                   fillOpacity={1}
                   fill="url(#colorEntry)"
                   strokeWidth={2}
+                  name="Masuk"
                 />
                 <Area
                   type="monotone"
-                  dataKey="exit"
+                  dataKey="keluar"
                   stroke="#00d4ff"
                   fillOpacity={1}
                   fill="url(#colorExit)"
                   strokeWidth={2}
+                  name="Keluar"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -880,7 +896,7 @@ const AnalyticsPage = () => {
 
         {/* Two Columns */}
         <div className={styles.chartRow}>
-          {/* Access Validation */}
+          {/* Access Validation — data real */}
           <section className={styles.chartSection} style={{ marginBottom: 0 }}>
             <div
               style={{
@@ -893,29 +909,21 @@ const AnalyticsPage = () => {
             >
               <h2 className={styles.chartTitle}>Access Validation</h2>
               <ExportButton
-                data={getFilteredData(
-                  validationData,
-                  validationStartDate,
-                  validationEndDate,
-                )}
+                data={analyticsData?.accessValidation ?? []}
                 filename="access-validation"
               />
             </div>
-            <DateFilterControl
-              startDate={validationStartDate}
-              setStartDate={setValidationStartDate}
-              endDate={validationEndDate}
-              setEndDate={setValidationEndDate}
-            />
+            <p style={{ fontSize: "0.72rem", color: "#475569", margin: "0 0 1rem" }}>
+              Menggunakan rentang tanggal yang sama dengan Traffic Volume
+            </p>
             <div className={styles.pieContainer}>
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
-                    data={getFilteredData(
-                      validationData,
-                      validationStartDate,
-                      validationEndDate,
-                    )}
+                    data={[
+                      { name: "Diterima", value: analyticsData?.accessValidation[0]?.value ?? 0, fill: "#10b981" },
+                      { name: "Ditolak",  value: analyticsData?.accessValidation[1]?.value ?? 0, fill: "#ef4444" },
+                    ]}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -925,58 +933,21 @@ const AnalyticsPage = () => {
                     stroke="#0f172a"
                     strokeWidth={2}
                   >
-                    {getFilteredData(
-                      validationData,
-                      validationStartDate,
-                      validationEndDate,
-                    ).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
+                    <Cell fill="#10b981" />
+                    <Cell fill="#ef4444" />
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #1e293b", borderRadius: "8px" }} />
                 </PieChart>
               </ResponsiveContainer>
               <div className={styles.pieLegend}>
-                {getFilteredData(
-                  validationData,
-                  validationStartDate,
-                  validationEndDate,
-                ).length > 0 ? (
-                  <>
-                    <div className={styles.legendItem}>
-                      <div
-                        className={styles.dot}
-                        style={{ backgroundColor: "#10b981" }}
-                      />
-                      Accepted:{" "}
-                      {
-                        getFilteredData(
-                          validationData,
-                          validationStartDate,
-                          validationEndDate,
-                        )[0]?.value
-                      }
-                    </div>
-                    <div className={styles.legendItem}>
-                      <div
-                        className={styles.dot}
-                        style={{ backgroundColor: "#ef4444" }}
-                      />
-                      Rejected:{" "}
-                      {
-                        getFilteredData(
-                          validationData,
-                          validationStartDate,
-                          validationEndDate,
-                        )[1]?.value
-                      }
-                    </div>
-                  </>
-                ) : (
-                  <div style={{ color: "#94a3b8" }}>
-                    No data for selected date range
-                  </div>
-                )}
+                <div className={styles.legendItem}>
+                  <div className={styles.dot} style={{ backgroundColor: "#10b981" }} />
+                  Diterima: {analyticsData?.accessValidation[0]?.value ?? 0}
+                </div>
+                <div className={styles.legendItem}>
+                  <div className={styles.dot} style={{ backgroundColor: "#ef4444" }} />
+                  Ditolak: {analyticsData?.accessValidation[1]?.value ?? 0}
+                </div>
               </div>
             </div>
           </section>
@@ -1190,7 +1161,7 @@ const AnalyticsPage = () => {
           </div>
         </section>
 
-        {/* Total Revenue */}
+        {/* Total Revenue — data real dari gate KELUAR */}
         <section className={styles.chartSection} style={{ marginTop: "2rem" }}>
           <div
             style={{
@@ -1201,37 +1172,24 @@ const AnalyticsPage = () => {
               marginBottom: "1rem",
             }}
           >
-            <h2 className={styles.chartTitle}>TOTAL Revenue - daily</h2>
+            <h2 className={styles.chartTitle}>TOTAL Revenue - Daily (Gate Keluar)</h2>
             <ExportButton
-              data={getFilteredData(
-                queueData,
-                revenueStartDate,
-                revenueEndDate,
-              )}
+              data={analyticsData?.revenueHarian ?? []}
               filename="total-revenue-daily"
             />
           </div>
-          <DateFilterControl
-            startDate={revenueStartDate}
-            setStartDate={setRevenueStartDate}
-            endDate={revenueEndDate}
-            setEndDate={setRevenueEndDate}
-          />
+          <p style={{ fontSize: "0.72rem", color: "#475569", margin: "0 0 1rem" }}>
+            Menggunakan rentang tanggal yang sama dengan Traffic Volume
+          </p>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart
-              data={getFilteredData(
-                queueData,
-                revenueStartDate,
-                revenueEndDate,
-              )}
-            >
+            <BarChart data={analyticsData?.revenueHarian ?? []}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="#1e293b"
                 vertical={false}
               />
               <XAxis
-                dataKey="time"
+                dataKey="tanggal"
                 stroke="#64748b"
                 fontSize={10}
                 axisLine={false}
@@ -1242,13 +1200,19 @@ const AnalyticsPage = () => {
                 fontSize={10}
                 axisLine={false}
                 tickLine={false}
+                tickFormatter={(v) => `Rp${(v / 1000).toFixed(0)}k`}
               />
-              <Tooltip />
+              <Tooltip
+                formatter={(value: any) => [`Rp ${Number(value).toLocaleString("id-ID")}`, "Revenue"]}
+                contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #1e293b", borderRadius: "8px" }}
+                itemStyle={{ color: "#f8fafc" }}
+              />
               <Bar
-                dataKey="seg"
+                dataKey="revenue"
                 fill="#10b981"
                 radius={[4, 4, 0, 0]}
-                barSize={60}
+                barSize={40}
+                name="Revenue"
               />
             </BarChart>
           </ResponsiveContainer>

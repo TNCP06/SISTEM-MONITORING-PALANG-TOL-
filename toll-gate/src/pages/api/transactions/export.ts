@@ -13,15 +13,19 @@ interface TolEvent {
   waktu: string;
   status: string;
   tipe_gate: string;
+  nama?: string;
+  biaya?: number;
+  saldo_sebelum?: number;
+  saldo_sesudah?: number;
   alasan?: string;
   received_at?: string;
 }
 
 function toCSV(rows: TolEvent[]): string {
   if (rows.length === 0)
-    return "uid,waktu,status,tipe_gate,alasan,received_at\n(tidak ada data)";
+    return "uid,nama,waktu,status,tipe_gate,biaya,saldo_sebelum,saldo_sesudah,alasan,received_at\n(tidak ada data)";
 
-  const headers = ["uid", "waktu", "status", "tipe_gate", "alasan", "received_at"];
+  const headers = ["uid", "nama", "waktu", "status", "tipe_gate", "biaya", "saldo_sebelum", "saldo_sesudah", "alasan", "received_at"];
   const escape = (val: unknown) =>
     `"${String(val ?? "").replace(/"/g, '""')}"`;
 

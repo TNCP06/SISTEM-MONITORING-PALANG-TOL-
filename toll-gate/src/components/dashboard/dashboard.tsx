@@ -19,12 +19,14 @@ type TrafficLevel = "SMOOTH" | "MODERATE" | "CONGESTED";
 type Transaction = {
   id: string;
   cardId: string;
+  nama: string;
   date: string;
   time: string;
-  month: string; 
+  month: string;
   status: "ACCEPTED" | "REJECTED";
   gate: "ENTRY" | "EXIT";
   biaya: number;
+  saldo_sesudah: number | null;
   keterangan: string;
   timestamp: number;
 };
@@ -77,12 +79,14 @@ export function Dashboard() {
     return {
       id: getTransactionId(item),
       cardId: item.uid,
+      nama: item.nama || "",
       date: dt.toISOString().split("T")[0],
       time: dt.toLocaleTimeString("id-ID", { hour12: false }),
       month: dt.toISOString().slice(0, 7),
       status: item.status === "DITERIMA" ? "ACCEPTED" : "REJECTED",
       gate: item.tipe_gate === "MASUK" ? "ENTRY" : "EXIT",
       biaya: Number(item.biaya) || 0,
+      saldo_sesudah: item.saldo_sesudah != null ? Number(item.saldo_sesudah) : null,
       keterangan: item.keterangan || deriveKeterangan(item),
       timestamp: dt.getTime(),
     };
@@ -178,11 +182,12 @@ export function Dashboard() {
               setEntryGateStatus("OPEN");
               setTimeout(() => setEntryGateStatus("CLOSED"), 3000);
               setVehiclesEntered((p) => p + 1);
-              setTotalRevenue((p) => p + (Number(data.biaya) || 0));
             } else if (data.tipe_gate === "KELUAR") {
               setExitGateStatus("OPEN");
               setTimeout(() => setExitGateStatus("CLOSED"), 3000);
               setVehiclesExited((p) => p + 1);
+              // Revenue dihitung saat KELUAR karena pembayaran terjadi di exit gate
+              setTotalRevenue((p) => p + (Number(data.biaya) || 0));
             }
           }
 
@@ -270,22 +275,26 @@ export function Dashboard() {
     const rows = filteredTransactions;
     const header = [
       "Card ID",
+      "Nama",
       "Gate",
       "Tanggal",
       "Waktu",
       "Status",
       "Biaya (Rp)",
+      "Saldo Akhir (Rp)",
       "Keterangan",
     ].join(",");
 
     const body = rows.map((t) =>
       [
         t.cardId,
+        `"${(t.nama || "-").replace(/"/g, "'")}"`,
         t.gate,
         t.date,
         t.time,
         t.status,
         t.biaya,
+        t.saldo_sesudah != null ? t.saldo_sesudah : "-",
         `"${t.keterangan.replace(/"/g, "'")}"`,
       ].join(","),
     );
@@ -560,11 +569,13 @@ export function Dashboard() {
             <thead>
               <tr>
                 <th className={styles.tableHeaderCell}>CARD ID</th>
+                <th className={styles.tableHeaderCell}>NAMA</th>
                 <th className={styles.tableHeaderCell}>GATE</th>
                 <th className={styles.tableHeaderCell}>TANGGAL</th>
                 <th className={styles.tableHeaderCell}>WAKTU</th>
                 <th className={styles.tableHeaderCell}>STATUS</th>
                 <th className={styles.tableHeaderCell}>BIAYA</th>
+                <th className={styles.tableHeaderCell}>SALDO AKHIR</th>
                 <th className={styles.tableHeaderCell}>KETERANGAN</th>
               </tr>
             </thead>
@@ -589,6 +600,9 @@ export function Dashboard() {
                   >
                     <td className={`${styles.tableCell} ${styles.tableCellCardId}`}>
                       {transaction.cardId}
+                    </td>
+                    <td className={styles.tableCell} style={{ color: "#94a3b8", fontSize: "0.78rem" }}>
+                      {transaction.nama || "-"}
                     </td>
                     <td className={styles.tableCell}>
                       <span className={styles.gateTag}>
@@ -628,6 +642,14 @@ export function Dashboard() {
                       whiteSpace: "nowrap",
                     }}>
                       {transaction.biaya > 0 ? formatRupiah(transaction.biaya) : "-"}
+                    </td>
+                    {/* Saldo Akhir */}
+                    <td className={styles.tableCell} style={{
+                      color: transaction.saldo_sesudah != null ? "#10b981" : "#64748b",
+                      fontSize: "0.78rem",
+                      whiteSpace: "nowrap",
+                    }}>
+                      {transaction.saldo_sesudah != null ? formatRupiah(transaction.saldo_sesudah) : "-"}
                     </td>
                     {/* Keterangan */}
                     <td className={styles.tableCell} style={{
