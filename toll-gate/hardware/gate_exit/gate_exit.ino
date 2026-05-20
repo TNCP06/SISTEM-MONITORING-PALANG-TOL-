@@ -277,8 +277,8 @@ void tungguMobilLewat() {
   while (millis() - start < 10000) {
     client.loop();
     int jarak = bacaJarak();
-    if (jarak > 0 && jarak < 15) terdeteksi = true;
-    if (terdeteksi && jarak > 20) {
+    if (jarak > 0 && jarak < 20) terdeteksi = true;
+    if (terdeteksi && jarak > 25) {
       Serial.println("[SENSOR] Mobil lewat");
       break;
     }
@@ -309,8 +309,9 @@ void bacaRFID() {
   jarakTerakhir = bacaJarak();
 
   // Cek jarak kendaraan
-  if (jarakTerakhir == 0 || jarakTerakhir > 15) {
+  if (jarakTerakhir == 0 || jarakTerakhir > 20) {
     tampilLCD("Tidak ada", "Kendaraan");
+    buzzerError();
     kedipMerah(2);
     delay(500);
     tampilanStandby();  // LED kembali biru
