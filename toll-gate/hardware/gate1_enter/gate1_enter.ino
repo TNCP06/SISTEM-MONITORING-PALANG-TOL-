@@ -29,6 +29,9 @@ const int redPin   = 32;
 const int greenPin = 33;
 const int bluePin  = 27;
 
+// ================= JARAK_THRESHOLD =================
+//#define JARAK_THRESHOLD 12
+
 // ================= OBJEK =================
 WiFiClientSecure espClient;
 PubSubClient client(espClient);
@@ -43,6 +46,7 @@ unsigned long waktuKirim       = 0;
 unsigned long waktuTerakhir    = 0;
 int           jarakTerakhir    = 100;
 const unsigned long TIMEOUT_MS = 8000;
+const int JARAK_THRESHOLD = 13;
 
 // ================= PROTOTYPE =================
 void connectWiFi();
@@ -122,15 +126,13 @@ void kedipMerah(int jumlah) {
   }
 }
 
-// ================= BUZZER (Active Buzzer, pakai digitalWrite) =================
+// ================= BUZZER =================
 void buzzerOK() {
-  // Tit pendek sekali = akses OK
   digitalWrite(BUZZER, HIGH); delay(200);
   digitalWrite(BUZZER, LOW);
 }
 
 void buzzerError() {
-  // Tit-tit-tit = ditolak / error
   for (int i = 0; i < 3; i++) {
     digitalWrite(BUZZER, HIGH); delay(150);
     digitalWrite(BUZZER, LOW);  delay(150);
@@ -144,7 +146,7 @@ void responDiterima(JsonDocument& doc) {
 
   Serial.println("[MASUK] DITERIMA nama=" + nama + " saldo=" + String(saldo));
 
-  nyalakanWarna(0, 255, 0); // Hijau
+  nyalakanWarna(0, 255, 0);
   buzzerOK();
 
   tampilLCD("Selamat Datang!", nama);
@@ -156,7 +158,7 @@ void responDiterima(JsonDocument& doc) {
   tungguMobilLewat();
   tutupPalang();
 
-  nyalakanWarna(0, 0, 255); // Balik ke biru standby
+  nyalakanWarna(255, 255, 0);
   tampilanStandby();
 }
 
@@ -166,7 +168,7 @@ void responDitolak(JsonDocument& doc) {
 
   Serial.println("[MASUK] DITOLAK alasan=" + alasan);
 
-  nyalakanWarna(255, 0, 0); // Merah
+  nyalakanWarna(255, 0, 0);
   buzzerError();
 
   if (alasan == "SALDO_TIDAK_CUKUP") {
@@ -180,7 +182,7 @@ void responDitolak(JsonDocument& doc) {
   }
 
   kedipMerah(2);
-  nyalakanWarna(0, 0, 255); // Balik ke biru standby
+  nyalakanWarna(255, 255, 0);
   tampilanStandby();
 }
 
@@ -191,12 +193,7 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
   Serial.println("[MQTT] " + String(topic) + ": " + msg);
 
   // === HANDLE GATE CONTROL COMMANDS ===
-  Serial.println("[DEBUG] Checking if topic is TOPIC_CONTROL...");
-  Serial.println("[DEBUG] Received topic: " + String(topic));
-  Serial.println("[DEBUG] Expected topic: " + String(TOPIC_CONTROL));
-  
   if (String(topic) == TOPIC_CONTROL) {
-    Serial.println("[DEBUG] ✓ Topic matched!");
     JsonDocument doc;
     if (deserializeJson(doc, msg)) {
       Serial.println("[ERR] JSON parse gagal pada control message");
@@ -204,31 +201,27 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     }
     String action = doc["action"] | "";
     Serial.println("[DEBUG] Action: " + action);
-    
+
     if (action == "OPEN") {
-      Serial.println("[CONTROL] ✓ Opening gate...");
+      Serial.println("[CONTROL] Opening gate...");
       nyalakanWarna(0, 255, 0);
       tampilLCD("Manual Control", "Palang Membuka");
       bukaPalang();
       delay(1000);
       tampilanStandby();
-      nyalakanWarna(0, 0, 255);
-      Serial.println("[CONTROL] ✓ Gate opened");
+      nyalakanWarna(255, 255, 0);
     } else if (action == "CLOSE") {
-      Serial.println("[CONTROL] ✓ Closing gate...");
+      Serial.println("[CONTROL] Closing gate...");
       nyalakanWarna(255, 0, 0);
       tampilLCD("Manual Control", "Palang Menutup");
       tutupPalang();
       delay(1000);
       tampilanStandby();
-      nyalakanWarna(0, 0, 255);
-      Serial.println("[CONTROL] ✓ Gate closed");
+      nyalakanWarna(255, 255, 0);
     } else {
       Serial.println("[DEBUG] Unknown action: " + action);
     }
     return;
-  } else {
-    Serial.println("[DEBUG] ✗ Topic didn't match");
   }
 
   // === HANDLE SERVER RESPONSE ===
@@ -271,35 +264,56 @@ void connectMQTT() {
   }
 }
 
-// ================= SERVO & ULTRASONIK =================
-int bacaJarak() {
-  digitalWrite(TRIG_PIN, LOW);  delayMicroseconds(2);
-  digitalWrite(TRIG_PIN, HIGH); delayMicroseconds(10);
-  digitalWrite(TRIG_PIN, LOW);
-  long dur = pulseIn(ECHO_PIN, HIGH, 30000);
-  return dur * 0.034 / 2;
+// ================= SERVO =================
+void bukaPalang() {
+  palang.write(0);
+  Serial.println("[SERVO] Palang BUKA");
 }
 
-void bukaPalang()  { palang.write(0); Serial.println("[SERVO] Buka");  }
-void tutupPalang() { palang.write(90);  Serial.println("[SERVO] Tutup"); }
+void tutupPalang() {
+  palang.write(90);
+  Serial.println("[SERVO] Palang TUTUP");
+}
+
+// ================= ULTRASONIK =================
+int bacaJarak() {
+  int total = 0, valid = 0;
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(TRIG_PIN, LOW);  delayMicroseconds(4);
+    digitalWrite(TRIG_PIN, HIGH); delayMicroseconds(10);
+    digitalWrite(TRIG_PIN, LOW);
+    long dur = pulseIn(ECHO_PIN, HIGH, 30000);
+    if (dur > 0) {
+      total += (int)(dur * 0.034 / 2);
+      valid++;
+    }
+    delayMicroseconds(500);
+  }
+  int hasil = (valid > 0) ? total / valid : 0;
+  // Serial.println("[SONAR] " + String(hasil) + "cm (valid=" + String(valid) + "/3)");
+  return hasil;
+}
 
 void tungguMobilLewat() {
   bool terdeteksi = false;
   unsigned long start = millis();
-  while (millis() - start < 10000) {  // max 10 detik
+  while (millis() - start < 3000) {
     client.loop();
     int jarak = bacaJarak();
-    if (jarak > 0 && jarak < 13) terdeteksi = true;
-    if (terdeteksi && jarak > 12) {
-      Serial.println("[SENSOR] Mobil lewat");
+    if (jarak > 0 && jarak < JARAK_THRESHOLD) {
+      if (!terdeteksi) Serial.println("[SENSOR] Mobil terdeteksi, jarak=" + String(jarak) + "cm");
+      terdeteksi = true;
+    }
+    if (terdeteksi && (jarak == 0 || jarak >= JARAK_THRESHOLD)) {
+      Serial.println("[SENSOR] Mobil sudah lewat, jarak=" + String(jarak) + "cm");
       break;
     }
-    delay(100);
+    delay(5000);
   }
   if (!terdeteksi) Serial.println("[TIMEOUT] Mobil tidak kunjung lewat");
 }
 
-// ================= RFID =================
+// =================  bacaRFID()  =================
 void bacaRFID() {
   if (!rfid.PICC_IsNewCardPresent()) return;
   if (!rfid.PICC_ReadCardSerial()) return;
@@ -319,11 +333,10 @@ void bacaRFID() {
   uid.toUpperCase();
   Serial.println("[RFID] UID: " + uid);
 
-  // Ambil jarak terbaru saat kartu di-tap
   jarakTerakhir = bacaJarak();
 
-  // Cek kendaraan
-  if (jarakTerakhir == 0 || jarakTerakhir > 20) {
+  if (jarakTerakhir == 0 || jarakTerakhir >= JARAK_THRESHOLD) {
+    Serial.println("[RFID] Tidak ada kendaraan, jarak=" + String(jarakTerakhir) + "cm");
     tampilLCD("Tidak ada", "Kendaraan");
     kedipMerah(2);
     delay(500);
@@ -332,7 +345,6 @@ void bacaRFID() {
     return;
   }
 
-  // Kirim ke server — server yang memutuskan
   String waktu   = getFormattedTime();
   String payload = "{\"uid\":\"" + uid + "\","
                    "\"tipe_gate\":\"MASUK\","
@@ -345,9 +357,8 @@ void bacaRFID() {
   uidMenunggu      = uid;
   waktuKirim       = millis();
 
-  nyalakanWarna(0, 0, 255); // Biru "Memproses"
+  nyalakanWarna(255, 255, 0);
   tampilLCD("Memproses...", "Harap Tunggu...");
-
   rfid.PICC_HaltA();
 }
 
@@ -380,7 +391,7 @@ void setup() {
   SPI.begin();
   rfid.PCD_Init();
 
-  nyalakanWarna(0, 0, 255); // Standby = Biru
+  nyalakanWarna(255, 255, 0);
   tampilanStandby();
 
   Serial.println("[SETUP] Gate 1 MASUK Siap!");
@@ -410,7 +421,7 @@ void loop() {
     tampilLCD("Server Timeout", "Coba lagi");
     buzzerError();
     delay(2000);
-    nyalakanWarna(0, 0, 255);
+    nyalakanWarna(255, 255, 0);
     tampilanStandby();
   }
 
