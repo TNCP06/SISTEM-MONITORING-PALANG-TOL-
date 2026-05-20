@@ -108,6 +108,7 @@ void tampilanStandby() {
   lcd.clear();
   lcd.setCursor(0, 0); lcd.print(" Gerbang Tol V2 ");
   lcd.setCursor(0, 1); lcd.print(" Tap Kartu Anda ");
+  nyalakanWarna(0, 0, 255);  // LED biru otomatis saat idle
 }
 
 // ================= LED RGB =================
@@ -159,8 +160,7 @@ void responDiterima(JsonDocument& doc) {
   tungguMobilLewat();
   tutupPalang();
 
-  nyalakanWarna(0, 0, 255); // Balik ke biru standby
-  tampilanStandby();
+  tampilanStandby();  // sudah otomatis nyalakan LED biru
 }
 
 void responDitolak(JsonDocument& doc) {
@@ -183,8 +183,7 @@ void responDitolak(JsonDocument& doc) {
   }
 
   kedipMerah(2);
-  nyalakanWarna(0, 0, 255); // Balik ke biru standby
-  tampilanStandby();
+  tampilanStandby();  // sudah otomatis nyalakan LED biru
 }
 
 // ================= MQTT =================
@@ -207,16 +206,14 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
       tampilLCD("Manual Control", "Palang Membuka");
       bukaPalang();
       delay(1000);
-      tampilanStandby();
-      nyalakanWarna(0, 0, 255);
+      tampilanStandby();  // LED kembali biru
     } else if (action == "CLOSE") {
       Serial.println("[CONTROL] Menutup palang...");
       nyalakanWarna(255, 0, 0);
       tampilLCD("Manual Control", "Palang Menutup");
       tutupPalang();
       delay(1000);
-      tampilanStandby();
-      nyalakanWarna(0, 0, 255);
+      tampilanStandby();  // LED kembali biru
     }
     return;
   }
@@ -316,7 +313,7 @@ void bacaRFID() {
     tampilLCD("Tidak ada", "Kendaraan");
     kedipMerah(2);
     delay(500);
-    tampilanStandby();
+    tampilanStandby();  // LED kembali biru
     rfid.PICC_HaltA();
     return;
   }
@@ -344,19 +341,23 @@ void bacaRFID() {
 void setup() {
   Serial.begin(115200);
 
-  connectWiFi();
-  syncNTP();
-
-  espClient.setInsecure();
-  client.setServer(mqtt_server, mqtt_port);
-  client.setCallback(onMqttMessage);
-
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   pinMode(redPin,   OUTPUT);
   pinMode(greenPin, OUTPUT);
   pinMode(bluePin,  OUTPUT);
   pinMode(BUZZER,   OUTPUT);
+  digitalWrite(BUZZER, LOW);
+
+  // LED biru dulu sebelum konek WiFi supaya tidak ada flicker
+  nyalakanWarna(0, 0, 255);
+
+  connectWiFi();
+  syncNTP();
+
+  espClient.setInsecure();
+  client.setServer(mqtt_server, mqtt_port);
+  client.setCallback(onMqttMessage);
 
   palang.setPeriodHertz(50);
   palang.attach(SERVO_PIN, 500, 2400);
@@ -369,8 +370,7 @@ void setup() {
   SPI.begin();
   rfid.PCD_Init();
 
-  nyalakanWarna(0, 0, 255);
-  tampilanStandby();
+  tampilanStandby();  // LCD + LED biru
 
   Serial.println("[SETUP] Gate " + String(TIPE_GATE) + " Siap!");
 }
@@ -399,8 +399,7 @@ void loop() {
     tampilLCD("Server Timeout", "Coba lagi");
     buzzerError();
     delay(2000);
-    nyalakanWarna(0, 0, 255);
-    tampilanStandby();
+    tampilanStandby();  // LED kembali biru
   }
 
   bacaRFID();
