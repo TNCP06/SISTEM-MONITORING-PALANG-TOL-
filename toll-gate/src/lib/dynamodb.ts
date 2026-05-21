@@ -9,5 +9,6 @@ const client = new DynamoDBClient({
   },
 });
 
-export const dynamo = DynamoDBDocumentClient.from(client);
-export const CARDS_TABLE = process.env.DYNAMODB_CARDS_TABLE ?? "rfid-cards";
+export const dynamo       = DynamoDBDocumentClient.from(client);
+export const CARDS_TABLE  = process.env.DYNAMODB_CARDS_TABLE ?? "rfid-cards";
+export const CONFIG_TABLE = "tol_config";
