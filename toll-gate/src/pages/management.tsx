@@ -2,8 +2,7 @@ import styles from "@/styles/management.module.css";
 import {
   Calendar,
   CreditCard,
-  Download,
-  FileText,
+  Lock,
   Loader2,
   Plus,
   RefreshCw,
@@ -35,6 +34,22 @@ const formatRupiah = (n: number) => "Rp " + Number(n).toLocaleString("id-ID");
 const POLL_INTERVAL = 10_000;
 
 const ManagementPage = () => {
+  // ── Auth gate ──────────────────────────────────────────────────────────────
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // ── Cek session saat halaman dimuat ───────────────────────────────────────
+  useEffect(() => {
+    fetch("/api/auth/management")
+      .then((r) => r.json())
+      .then((data) => { if (data.authenticated) setIsAuthenticated(true); })
+      .catch(() => {})
+      .finally(() => setIsCheckingAuth(false));
+  }, []);
+
   // ── State kartu ────────────────────────────────────────────────────────────
   const [cards, setCards] = useState<RFIDCard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,9 +57,7 @@ const ManagementPage = () => {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<
-    "ALL" | "ACTIVE" | "INACTIVE"
-  >("ALL");
+  const [filterStatus, setFilterStatus] = useState<"ALL" | "ACTIVE">("ALL");
 
   // ── Modal Add Card ─────────────────────────────────────────────────────────
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -56,11 +69,12 @@ const ManagementPage = () => {
   const [modalError, setModalError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // ── Export ─────────────────────────────────────────────────────────────────
-  const [exportStatus, setExportStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
-  const [exportError, setExportError] = useState<string | null>(null);
+  // ── Konfigurasi Tarif ─────────────────────────────────────────────────────
+  const [tarif, setTarif]             = useState<number | null>(null);
+  const [tarifInput, setTarifInput]   = useState("");
+  const [isSavingTarif, setIsSavingTarif] = useState(false);
+  const [tarifError, setTarifError]   = useState<string | null>(null);
+  const [tarifSuccess, setTarifSuccess] = useState(false);
 
   // ── Top-up Modal ───────────────────────────────────────────────────────────
   const [topupCard, setTopupCard] = useState<RFIDCard | null>(null);
@@ -90,12 +104,17 @@ const ManagementPage = () => {
   }, []);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     fetchCards(true);
+    fetch("/api/config/tarif")
+      .then((r) => r.json())
+      .then((d) => { if (d.tarif) { setTarif(d.tarif); setTarifInput(String(d.tarif)); } })
+      .catch(() => {});
     timerRef.current = setInterval(() => fetchCards(false), POLL_INTERVAL);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [fetchCards]);
+  }, [fetchCards, isAuthenticated]);
 
   // ── Filter + Search ────────────────────────────────────────────────────────
   const filteredCards = useMemo(
@@ -111,67 +130,36 @@ const ManagementPage = () => {
     [cards, searchTerm, filterStatus],
   );
 
-  // ── Stats ──────────────────────────────────────────────────────────────────
-  const stats = useMemo(
-    () => ({
-      total: cards.length,
-      active: cards.filter((c) => c.status === "ACTIVE").length,
-      inactive: cards.filter((c) => c.status === "INACTIVE").length,
-    }),
-    [cards],
-  );
-
-  // ── Helper download blob ───────────────────────────────────────────────────
-  const downloadBlob = (blob: Blob, filename: string) => {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  // ── Export Cards CSV (tanpa saldo) ─────────────────────────────────────────
-  const handleExportCards = () => {
-    if (cards.length === 0) return;
-    const headers = ["uid", "owner", "date", "status"];
-    const escape = (val: unknown) =>
-      `"${String(val ?? "").replace(/"/g, '""')}"`;
-    const csv = [
-      headers.join(","),
-      ...cards.map((row) =>
-        headers.map((h) => escape(row[h as keyof typeof row])).join(","),
-      ),
-    ].join("\n");
-    downloadBlob(
-      new Blob([csv], { type: "text/csv;charset=utf-8;" }),
-      `rfid_cards_${new Date().toISOString().split("T")[0]}.csv`,
-    );
-  };
-
-  // ── Export Transaction Logs ────────────────────────────────────────────────
-  const handleExportLogs = async () => {
-    setExportStatus("loading");
-    setExportError(null);
+  // ── Simpan Tarif ──────────────────────────────────────────────────────────
+  const handleSaveTarif = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const nominal = parseInt(tarifInput.replace(/\D/g, ""), 10);
+    if (!nominal || nominal < 500 || nominal > 1_000_000) {
+      setTarifError("Tarif harus antara Rp 500 dan Rp 1.000.000.");
+      return;
+    }
+    setIsSavingTarif(true);
+    setTarifError(null);
+    setTarifSuccess(false);
     try {
-      const response = await fetch("/api/transactions/export");
-      if (!response.ok) {
-        const json = await response.json().catch(() => ({}));
-        throw new Error(json.error ?? `Server error: ${response.status}`);
+      const res = await fetch("/api/config/tarif", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tarif: nominal }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error ?? "Gagal menyimpan tarif.");
       }
-      const blob = await response.blob();
-      downloadBlob(
-        blob,
-        `tol_events_${new Date().toISOString().split("T")[0]}.csv`,
-      );
-      setExportStatus("success");
-      setTimeout(() => setExportStatus("idle"), 3000);
+      const { tarif: saved } = await res.json();
+      setTarif(saved);
+      setTarifInput(String(saved));
+      setTarifSuccess(true);
+      setTimeout(() => setTarifSuccess(false), 3000);
     } catch (err) {
-      setExportError(err instanceof Error ? err.message : "Terjadi kesalahan.");
-      setExportStatus("error");
-      setTimeout(() => setExportStatus("idle"), 5000);
+      setTarifError(err instanceof Error ? err.message : "Gagal menyimpan tarif.");
+    } finally {
+      setIsSavingTarif(false);
     }
   };
 
@@ -262,7 +250,191 @@ const ManagementPage = () => {
     }
   };
 
-  const isExporting = exportStatus === "loading";
+  // ── Password submit ────────────────────────────────────────────────────────
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+    try {
+      const res = await fetch("/api/auth/management", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: passwordInput }),
+      });
+      if (res.ok) {
+        setIsAuthenticated(true);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setPasswordError(data.error ?? "Password salah. Coba lagi.");
+        setPasswordInput("");
+      }
+    } catch {
+      setPasswordError("Terjadi kesalahan. Coba lagi.");
+      setPasswordInput("");
+    }
+  };
+
+  // ── Password Gate ──────────────────────────────────────────────────────────
+  if (isCheckingAuth) {
+    return (
+      <div className={styles.container}>
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Loader2 size={32} style={{ animation: "spin 1s linear infinite", color: "var(--accent-cyan)" }} />
+          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className={styles.container}>
+        <Head>
+          <title>Data Management | Smart Toll Gate</title>
+        </Head>
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "var(--surface-1)",
+              padding: "2.5rem",
+              borderRadius: "16px",
+              border: "1px solid var(--border-color)",
+              width: "380px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                marginBottom: "2rem",
+              }}
+            >
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: "50%",
+                  background: "rgba(0,212,255,0.1)",
+                  border: "1px solid rgba(0,212,255,0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: "1rem",
+                }}
+              >
+                <Lock size={24} color="var(--accent-cyan)" />
+              </div>
+              <h2
+                style={{
+                  color: "var(--text-strong)",
+                  margin: 0,
+                  fontSize: "1.25rem",
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "1.5px",
+                }}
+              >
+                Management Access
+              </h2>
+              <p
+                style={{
+                  color: "var(--text-muted)",
+                  fontSize: "0.8rem",
+                  margin: "0.5rem 0 0",
+                  textAlign: "center",
+                }}
+              >
+                Masukkan password untuk melanjutkan
+              </p>
+            </div>
+
+            {passwordError && (
+              <div
+                style={{
+                  background: "rgba(239,68,68,0.1)",
+                  border: "1px solid rgba(239,68,68,0.3)",
+                  borderRadius: "8px",
+                  padding: "0.75rem 1rem",
+                  marginBottom: "1rem",
+                  color: "var(--accent-red)",
+                  fontSize: "0.82rem",
+                  textAlign: "center",
+                }}
+              >
+                ⚠️ {passwordError}
+              </div>
+            )}
+
+            <form
+              onSubmit={handlePasswordSubmit}
+              style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+            >
+              <div style={{ position: "relative" }}>
+                <input
+                  autoFocus
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Masukkan password..."
+                  className={styles.searchInput}
+                  value={passwordInput}
+                  onChange={(e) => {
+                    setPasswordInput(e.target.value);
+                    setPasswordError(null);
+                  }}
+                  style={{ paddingRight: "3rem" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  style={{
+                    position: "absolute",
+                    right: "0.75rem",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    color: "var(--text-faint)",
+                    cursor: "pointer",
+                    padding: 0,
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  {showPassword ? "HIDE" : "SHOW"}
+                </button>
+              </div>
+              <button
+                type="submit"
+                style={{
+                  width: "100%",
+                  padding: "0.9rem",
+                  borderRadius: 8,
+                  border: "1px solid rgba(0,212,255,0.4)",
+                  background: "rgba(0,212,255,0.1)",
+                  color: "var(--accent-cyan)",
+                  fontWeight: 700,
+                  fontSize: "0.85rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "1px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                Unlock
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
@@ -275,40 +447,9 @@ const ManagementPage = () => {
         <header className={styles.header}>
           <h1 className={styles.title}>DATA MANAGEMENT</h1>
           <p className={styles.subtitle}>
-            Manage RFID cards and export system logs
+            Manage RFID cards and system data
           </p>
         </header>
-
-        {/* ── Stats (tanpa saldo) ── */}
-        <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <div className={styles.statHeader}>
-              <CreditCard size={14} />
-              <span>Total Cards</span>
-            </div>
-            <div className={`${styles.statValue} ${styles.textCyan}`}>
-              {isLoading ? "—" : stats.total}
-            </div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statHeader}>
-              <CreditCard size={14} />
-              <span>Active Cards</span>
-            </div>
-            <div className={`${styles.statValue} ${styles.textGreen}`}>
-              {isLoading ? "—" : stats.active}
-            </div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statHeader}>
-              <CreditCard size={14} />
-              <span>Inactive Cards</span>
-            </div>
-            <div className={`${styles.statValue} ${styles.textRed}`}>
-              {isLoading ? "—" : stats.inactive}
-            </div>
-          </div>
-        </div>
 
         {/* ── Error banner ── */}
         {fetchError && (
@@ -333,76 +474,52 @@ const ManagementPage = () => {
           </div>
         )}
 
-        {/* ── Export Section ── */}
-        <div className={styles.sectionCard}>
-          <h2 className={styles.sectionTitle}>Export System Logs</h2>
-
-          {exportStatus === "error" && exportError && (
-            <div
-              style={{
-                background: "rgba(239,68,68,0.1)",
-                border: "1px solid rgba(239,68,68,0.3)",
-                borderRadius: "8px",
-                padding: "0.75rem 1rem",
-                marginBottom: "1rem",
-                color: "var(--accent-red)",
-                fontSize: "0.85rem",
-              }}
-            >
-              ⚠️ {exportError}
+        {/* ── Konfigurasi Tarif ── */}
+        <div className={styles.sectionCard} style={{ marginBottom: "1.5rem" }}>
+          <h2 className={styles.sectionTitle}>KONFIGURASI TARIF TOL</h2>
+          <form onSubmit={handleSaveTarif}>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: "1rem", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <label style={{ color: "var(--text-subtle)", fontSize: "0.8rem", display: "block", marginBottom: "0.5rem" }}>
+                  Tarif Flat (Rp) &nbsp;
+                  {tarif !== null && (
+                    <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
+                      — saat ini: <span style={{ color: "var(--accent-cyan)", fontWeight: 600 }}>{formatRupiah(tarif)}</span>
+                    </span>
+                  )}
+                </label>
+                <input
+                  type="number"
+                  min="500"
+                  step="500"
+                  max="1000000"
+                  required
+                  className={styles.searchInput}
+                  placeholder="Contoh: 5000"
+                  value={tarifInput}
+                  onChange={(e) => { setTarifInput(e.target.value); setTarifError(null); setTarifSuccess(false); }}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSavingTarif}
+                className={styles.addBtn}
+                style={{ padding: "0.65rem 1.25rem", whiteSpace: "nowrap" }}
+              >
+                {isSavingTarif ? (
+                  <><Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> Menyimpan...</>
+                ) : (
+                  "Simpan Tarif"
+                )}
+              </button>
             </div>
-          )}
-          {exportStatus === "success" && (
-            <div
-              style={{
-                background: "rgba(34,197,94,0.1)",
-                border: "1px solid rgba(34,197,94,0.3)",
-                borderRadius: "8px",
-                padding: "0.75rem 1rem",
-                marginBottom: "1rem",
-                color: "var(--accent-green)",
-                fontSize: "0.85rem",
-              }}
-            >
-              ✅ File berhasil diunduh!
-            </div>
-          )}
-
-          <div className={styles.exportButtons}>
-            <button
-              onClick={handleExportCards}
-              disabled={isExporting || cards.length === 0}
-              className={`${styles.exportBtn} ${styles.btnCyan}`}
-              style={{ opacity: cards.length === 0 ? 0.5 : 1 }}
-            >
-              <Download size={18} />
-              <span>Export Cards (CSV)</span>
-            </button>
-            <button
-              onClick={handleExportLogs}
-              disabled={isExporting}
-              className={`${styles.exportBtn} ${styles.btnGreen}`}
-            >
-              {isExporting ? (
-                <>
-                  <Loader2
-                    size={18}
-                    style={{ animation: "spin 1s linear infinite" }}
-                  />
-                  <span>Mengambil data...</span>
-                </>
-              ) : (
-                <>
-                  <FileText size={18} />
-                  <span>Export Transaction Logs</span>
-                </>
-              )}
-            </button>
-          </div>
-          <p className={styles.btnDesc}>
-            Generate comprehensive reports including all gate transactions,
-            access logs, and system events
-          </p>
+            {tarifError && (
+              <p style={{ color: "var(--accent-red)", fontSize: "0.8rem", marginTop: "0.5rem" }}>⚠️ {tarifError}</p>
+            )}
+            {tarifSuccess && (
+              <p style={{ color: "var(--accent-green)", fontSize: "0.8rem", marginTop: "0.5rem" }}>✓ Tarif berhasil diperbarui. Subscriber akan menggunakan tarif baru dalam &lt;60 detik.</p>
+            )}
+          </form>
         </div>
 
         {/* ── RFID Card Registry ── */}
@@ -450,7 +567,7 @@ const ManagementPage = () => {
             </div>
           </div>
 
-          {/* ── Search + Filter Status: satu baris ── */}
+          {/* ── Search + Filter Status ── */}
           <div
             style={{
               display: "flex",
@@ -473,7 +590,7 @@ const ManagementPage = () => {
               />
             </div>
             <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
-              {(["ALL", "ACTIVE", "INACTIVE"] as const).map((s) => (
+              {(["ALL", "ACTIVE"] as const).map((s) => (
                 <button
                   key={s}
                   onClick={() => setFilterStatus(s)}
@@ -489,25 +606,19 @@ const ManagementPage = () => {
                       filterStatus === s
                         ? s === "ACTIVE"
                           ? "var(--accent-green)"
-                          : s === "INACTIVE"
-                            ? "var(--accent-magenta)"
-                            : "var(--accent-cyan)"
+                          : "var(--accent-cyan)"
                         : "rgba(255,255,255,0.1)",
                     background:
                       filterStatus === s
                         ? s === "ACTIVE"
                           ? "rgba(16,185,129,0.15)"
-                          : s === "INACTIVE"
-                            ? "rgba(236,72,153,0.15)"
-                            : "rgba(0,212,255,0.1)"
+                          : "rgba(0,212,255,0.1)"
                         : "transparent",
                     color:
                       filterStatus === s
                         ? s === "ACTIVE"
                           ? "var(--accent-green)"
-                          : s === "INACTIVE"
-                            ? "var(--accent-magenta)"
-                            : "var(--accent-cyan)"
+                          : "var(--accent-cyan)"
                         : "var(--text-muted)",
                   }}
                 >
