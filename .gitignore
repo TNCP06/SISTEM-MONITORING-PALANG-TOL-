@@ -4,3 +4,5 @@ CLAUDE.md
 
 # Backend script (contains credentials, deploy via EC2 only)
 subscriber.py
+
+node_modules/
