@@ -46,7 +46,7 @@ unsigned long waktuKirim       = 0;
 unsigned long waktuTerakhir    = 0;
 int           jarakTerakhir    = 100;
 const unsigned long TIMEOUT_MS = 8000;
-const int JARAK_THRESHOLD = 13;
+const int JARAK_THRESHOLD = 12;
 
 // ================= PROTOTYPE =================
 void connectWiFi();
@@ -158,7 +158,7 @@ void responDiterima(JsonDocument& doc) {
   tungguMobilLewat();
   tutupPalang();
 
-  nyalakanWarna(255, 255, 0);
+  nyalakanWarna(0, 0, 255);
   tampilanStandby();
 }
 
@@ -182,7 +182,7 @@ void responDitolak(JsonDocument& doc) {
   }
 
   kedipMerah(2);
-  nyalakanWarna(255, 255, 0);
+  nyalakanWarna(0, 0, 255);
   tampilanStandby();
 }
 
@@ -209,7 +209,7 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
       bukaPalang();
       delay(1000);
       tampilanStandby();
-      nyalakanWarna(255, 255, 0);
+      nyalakanWarna(0, 0, 255);
     } else if (action == "CLOSE") {
       Serial.println("[CONTROL] Closing gate...");
       nyalakanWarna(255, 0, 0);
@@ -217,7 +217,7 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
       tutupPalang();
       delay(1000);
       tampilanStandby();
-      nyalakanWarna(255, 255, 0);
+      nyalakanWarna(0, 0, 255);
     } else {
       Serial.println("[DEBUG] Unknown action: " + action);
     }
@@ -357,7 +357,7 @@ void bacaRFID() {
   uidMenunggu      = uid;
   waktuKirim       = millis();
 
-  nyalakanWarna(255, 255, 0);
+  nyalakanWarna(0, 0, 255);
   tampilLCD("Memproses...", "Harap Tunggu...");
   rfid.PICC_HaltA();
 }
@@ -391,7 +391,7 @@ void setup() {
   SPI.begin();
   rfid.PCD_Init();
 
-  nyalakanWarna(255, 255, 0);
+  nyalakanWarna(0, 0, 255);
   tampilanStandby();
 
   Serial.println("[SETUP] Gate 1 MASUK Siap!");
@@ -421,7 +421,7 @@ void loop() {
     tampilLCD("Server Timeout", "Coba lagi");
     buzzerError();
     delay(2000);
-    nyalakanWarna(255, 255, 0);
+    nyalakanWarna(0, 0, 255);
     tampilanStandby();
   }
 

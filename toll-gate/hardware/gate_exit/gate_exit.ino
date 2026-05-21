@@ -10,26 +10,27 @@
 #include <ArduinoJson.h>
 #include "secrets.h"
 
-// ================= KONFIGURASI =================
-const char* TOPIC_PUB          = "tol/gate2/event";
-const char* TOPIC_SUB          = "tol/gate2/response";
+// ================= KONFIGURASI =================------------------------------
 const char* TOPIC_CONTROL      = "tol/gate2/control";
+const char* TOPIC_SUB          = "tol/gate2/response"; 
+const char* TOPIC_PUB          = "tol/gate2/event";
 const char* ntpServer          = "pool.ntp.org";
-const long  gmtOffset_sec      = 25200;  // UTC+7 WIB
+const long  gmtOffset_sec      = 25200;
 const int   daylightOffset_sec = 0;
+const int JARAK_THRESHOLD = 12;
 
-#define TIPE_GATE "KELUAR"  // << Ganti "MASUK" atau "KELUAR" sesuai gate
+#define TIPE_GATE "KELUAR"
 
-// ================= PIN  =================
-#define SERVO_PIN 4      // SG90 di D4
-#define TRIG_PIN 13      // Ultrasonik Trig
-#define ECHO_PIN 12      // Ultrasonik Echo
-#define BUZZER 21        // BUZZER +
-#define SS_PIN 5         // RFID SDA
-#define RST_PIN 22       // RFID RST
-const int redPin = 32;
+// ================= PIN =================
+#define SERVO_PIN 14
+#define TRIG_PIN  13
+#define ECHO_PIN  12
+#define BUZZER    21
+#define SS_PIN     5
+#define RST_PIN   22
+const int redPin   = 32;
 const int greenPin = 33;
-const int bluePin = 27;
+const int bluePin  = 27;
 
 // ================= OBJEK =================
 WiFiClientSecure espClient;
@@ -44,7 +45,7 @@ String        uidMenunggu      = "";
 unsigned long waktuKirim       = 0;
 unsigned long waktuTerakhir    = 0;
 int           jarakTerakhir    = 100;
-const unsigned long TIMEOUT_MS = 8000;  // 8 detik timeout server
+const unsigned long TIMEOUT_MS = 20000;
 
 // ================= PROTOTYPE =================
 void connectWiFi();
@@ -108,14 +109,14 @@ void tampilanStandby() {
   lcd.clear();
   lcd.setCursor(0, 0); lcd.print(" Gerbang Tol V2 ");
   lcd.setCursor(0, 1); lcd.print(" Tap Kartu Anda ");
-  nyalakanWarna(0, 0, 255);  // LED biru otomatis saat idle
+  nyalakanWarna(0, 0, 255);
 }
 
 // ================= LED RGB =================
 void nyalakanWarna(int r, int g, int b) {
-  analogWrite(redPin,   r);
-  analogWrite(greenPin, g);
-  analogWrite(bluePin,  b);
+  digitalWrite(redPin,   r > 0 ? HIGH : LOW);
+  digitalWrite(greenPin, g > 0 ? HIGH : LOW);
+  digitalWrite(bluePin,  b > 0 ? HIGH : LOW);
 }
 
 void kedipMerah(int jumlah) {
@@ -125,30 +126,32 @@ void kedipMerah(int jumlah) {
   }
 }
 
-// ================= BUZZER (Active Buzzer, pakai digitalWrite) =================
+// ================= BUZZER =================
 void buzzerOK() {
-  // Tit pendek sekali = akses OK
-  digitalWrite(BUZZER, HIGH); delay(200);
-  digitalWrite(BUZZER, LOW);
+  // Pakai tone() khusus buat Passive Buzzer
+  tone(BUZZER, 2000); // 2000Hz = Suara melengking
+  delay(200);
+  noTone(BUZZER);     // Matikan
 }
 
 void buzzerError() {
-  // Tit-tit-tit = ditolak / error
   for (int i = 0; i < 3; i++) {
-    digitalWrite(BUZZER, HIGH); delay(150);
-    digitalWrite(BUZZER, LOW);  delay(150);
+    tone(BUZZER, 1000); // 1000Hz = Suara lebih berat
+    delay(150);
+    noTone(BUZZER);
+    delay(150);
   }
 }
 
 // ================= RESPONSE HANDLER =================
 void responDiterima(JsonDocument& doc) {
-  String nama          = doc["nama"]         | "Unknown";
+  String nama          = doc["nama"]          | "Unknown";
   int    saldo_sesudah = doc["saldo_sesudah"] | 0;
 
   Serial.println("[OK] DITERIMA nama=" + nama +
                  " saldo_sesudah=" + String(saldo_sesudah));
 
-  nyalakanWarna(0, 255, 0); // Hijau
+  nyalakanWarna(0, 255, 0);
   buzzerOK();
 
   tampilLCD("Terima kasih!", nama);
@@ -160,7 +163,7 @@ void responDiterima(JsonDocument& doc) {
   tungguMobilLewat();
   tutupPalang();
 
-  tampilanStandby();  // sudah otomatis nyalakan LED biru
+  tampilanStandby();
 }
 
 void responDitolak(JsonDocument& doc) {
@@ -168,7 +171,7 @@ void responDitolak(JsonDocument& doc) {
 
   Serial.println("[TOLAK] alasan=" + alasan);
 
-  nyalakanWarna(255, 0, 0); // Merah
+  nyalakanWarna(255, 0, 0);
   buzzerError();
 
   if (alasan == "BELUM_MASUK") {
@@ -183,7 +186,7 @@ void responDitolak(JsonDocument& doc) {
   }
 
   kedipMerah(2);
-  tampilanStandby();  // sudah otomatis nyalakan LED biru
+  tampilanStandby();
 }
 
 // ================= MQTT =================
@@ -192,7 +195,6 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
   for (unsigned int i = 0; i < length; i++) msg += (char)payload[i];
   Serial.println("[MQTT] " + String(topic) + ": " + msg);
 
-  // === HANDLE GATE CONTROL COMMANDS ===
   if (String(topic) == TOPIC_CONTROL) {
     JsonDocument doc;
     if (deserializeJson(doc, msg)) {
@@ -206,19 +208,18 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
       tampilLCD("Manual Control", "Palang Membuka");
       bukaPalang();
       delay(1000);
-      tampilanStandby();  // LED kembali biru
+      tampilanStandby();
     } else if (action == "CLOSE") {
       Serial.println("[CONTROL] Menutup palang...");
       nyalakanWarna(255, 0, 0);
       tampilLCD("Manual Control", "Palang Menutup");
       tutupPalang();
       delay(1000);
-      tampilanStandby();  // LED kembali biru
+      tampilanStandby();
     }
     return;
   }
 
-  // === HANDLE SERVER RESPONSE ===
   if (String(topic) != TOPIC_SUB) return;
   if (!menungguResponse) return;
 
@@ -228,7 +229,6 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
     return;
   }
 
-  // Pastikan response untuk UID yang sedang menunggu
   String uid = doc["uid"] | "";
   if (uid != uidMenunggu) return;
 
@@ -261,15 +261,25 @@ void connectMQTT() {
 
 // ================= SERVO & ULTRASONIK =================
 int bacaJarak() {
-  digitalWrite(TRIG_PIN, LOW);  delayMicroseconds(2);
-  digitalWrite(TRIG_PIN, HIGH); delayMicroseconds(10);
-  digitalWrite(TRIG_PIN, LOW);
-  long dur = pulseIn(ECHO_PIN, HIGH, 30000);
-  return dur * 0.034 / 2;
+  int total = 0, valid = 0;
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(TRIG_PIN, LOW);  delayMicroseconds(4);
+    digitalWrite(TRIG_PIN, HIGH); delayMicroseconds(10);
+    digitalWrite(TRIG_PIN, LOW);
+    long dur = pulseIn(ECHO_PIN, HIGH, 30000);
+    if (dur > 0) {
+      total += (int)(dur * 0.034 / 2);
+      valid++;
+    }
+    delayMicroseconds(500);
+  }
+  int hasil = (valid > 0) ? total / valid : 0;
+  // Serial.println("[SONAR] " + String(hasil) + "cm (valid=" + String(valid) + "/3)");
+  return hasil;
 }
 
-void bukaPalang()  { palang.write(90); Serial.println("[SERVO] Buka");  }
-void tutupPalang() { palang.write(0);  Serial.println("[SERVO] Tutup"); }
+void bukaPalang()  { palang.write(0);  Serial.println("[SERVO] Buka");  }
+void tutupPalang() { palang.write(90); Serial.println("[SERVO] Tutup"); }
 
 void tungguMobilLewat() {
   bool terdeteksi = false;
@@ -277,12 +287,15 @@ void tungguMobilLewat() {
   while (millis() - start < 10000) {
     client.loop();
     int jarak = bacaJarak();
-    if (jarak > 0 && jarak < 20) terdeteksi = true;
-    if (terdeteksi && jarak > 25) {
-      Serial.println("[SENSOR] Mobil lewat");
+    if (jarak > 0 && jarak < JARAK_THRESHOLD) {
+      if (!terdeteksi) Serial.println("[SENSOR] Mobil terdeteksi, jarak=" + String(jarak) + "cm");
+      terdeteksi = true;
+    }
+    if (terdeteksi && (jarak == 0 || jarak >= JARAK_THRESHOLD)) {
+      Serial.println("[SENSOR] Mobil sudah lewat, jarak=" + String(jarak) + "cm");
       break;
     }
-    delay(100);
+    delay(200);
   }
   if (!terdeteksi) Serial.println("[TIMEOUT] Mobil tidak kunjung lewat");
 }
@@ -308,18 +321,17 @@ void bacaRFID() {
   Serial.println("[RFID] UID: " + uid);
   jarakTerakhir = bacaJarak();
 
-  // Cek jarak kendaraan
-  if (jarakTerakhir == 0 || jarakTerakhir > 20) {
+  if (jarakTerakhir == 0 || jarakTerakhir >= JARAK_THRESHOLD) {
+    Serial.println("[RFID] Tidak ada kendaraan, jarak=" + String(jarakTerakhir) + "cm");
     tampilLCD("Tidak ada", "Kendaraan");
     buzzerError();
     kedipMerah(2);
     delay(500);
-    tampilanStandby();  // LED kembali biru
+    tampilanStandby();
     rfid.PICC_HaltA();
     return;
   }
 
-  // Kirim event ke server, tunggu response
   String waktu   = getFormattedTime();
   String payload = "{\"uid\":\"" + uid + "\","
                    "\"tipe_gate\":\"" + String(TIPE_GATE) + "\","
@@ -344,13 +356,13 @@ void setup() {
 
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
-  pinMode(redPin,   OUTPUT);
-  pinMode(greenPin, OUTPUT);
-  pinMode(bluePin,  OUTPUT);
   pinMode(BUZZER,   OUTPUT);
   digitalWrite(BUZZER, LOW);
 
-  // LED biru dulu sebelum konek WiFi supaya tidak ada flicker
+  pinMode(redPin,   OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin,  OUTPUT);
+
   nyalakanWarna(0, 0, 255);
 
   connectWiFi();
@@ -360,6 +372,7 @@ void setup() {
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(onMqttMessage);
 
+  // ── Servo di-attach SETELAH ledcAttachPin LED, supaya tidak rebut channel ──
   palang.setPeriodHertz(50);
   palang.attach(SERVO_PIN, 500, 2400);
   tutupPalang();
@@ -371,7 +384,7 @@ void setup() {
   SPI.begin();
   rfid.PCD_Init();
 
-  tampilanStandby();  // LCD + LED biru
+  tampilanStandby();
 
   Serial.println("[SETUP] Gate " + String(TIPE_GATE) + " Siap!");
 }
@@ -400,7 +413,7 @@ void loop() {
     tampilLCD("Server Timeout", "Coba lagi");
     buzzerError();
     delay(2000);
-    tampilanStandby();  // LED kembali biru
+    tampilanStandby();
   }
 
   bacaRFID();
