@@ -308,7 +308,7 @@ void tungguMobilLewat() {
       Serial.println("[SENSOR] Mobil sudah lewat, jarak=" + String(jarak) + "cm");
       break;
     }
-    delay(5000);
+    delay(200);
   }
   if (!terdeteksi) Serial.println("[TIMEOUT] Mobil tidak kunjung lewat");
 }
