@@ -803,7 +803,7 @@ const AnalyticsPage = () => {
             </div>
             <div
               className={`${styles.statValue} ${styles.textYellow}`}
-              style={{ fontSize: "1.1rem" }}
+              style={{ fontSize: "2.2rem" }}
             >
               {isLoadingAnalytics
                 ? "—"

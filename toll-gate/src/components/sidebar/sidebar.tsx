@@ -1,4 +1,11 @@
-import { BarChart2, Database, LayoutDashboard, Moon, Sun } from "lucide-react";
+import {
+  BarChart2,
+  Database,
+  LayoutDashboard,
+  Moon,
+  Sun,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Image from "next/image";
@@ -7,9 +14,18 @@ import styles from "./Sidebar.module.css";
 type SidebarProps = {
   theme: "light" | "dark";
   onToggleTheme: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  onNavigate?: () => void;
 };
 
-const Sidebar = ({ theme, onToggleTheme }: SidebarProps) => {
+const Sidebar = ({
+  theme,
+  onToggleTheme,
+  isOpen = false,
+  onClose,
+  onNavigate,
+}: SidebarProps) => {
   const router = useRouter();
   const isLight = theme === "light";
   const logoSrc = isLight
@@ -17,21 +33,36 @@ const Sidebar = ({ theme, onToggleTheme }: SidebarProps) => {
     : "/logo-horizontal.svg";
 
   return (
-    <aside className={styles.sidebar}>
+    <aside
+      className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ""}`}
+      id="app-sidebar"
+    >
       <div className={styles.logoSection}>
-        <Image
-          src={logoSrc}
-          alt="Toll Gate Logo"
-          width={500}
-          height={70}
-          priority
-        />
+        <div className={styles.logoRow}>
+          <Image
+            src={logoSrc}
+            alt="Toll Gate Logo"
+            width={500}
+            height={70}
+            priority
+            className={styles.logoImage}
+          />
+          <button
+            type="button"
+            className={styles.closeButton}
+            onClick={onClose}
+            aria-label="Close sidebar"
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
 
       <nav className={styles.nav}>
         <Link
           href="/"
           className={`${styles.navItem} ${router.pathname === "/" ? styles.active : ""}`}
+          onClick={onNavigate}
         >
           <LayoutDashboard size={20} />
           <span>Dashboard</span>
@@ -39,6 +70,7 @@ const Sidebar = ({ theme, onToggleTheme }: SidebarProps) => {
         <Link
           href="/analytics"
           className={`${styles.navItem} ${router.pathname === "/analytics" ? styles.active : ""}`}
+          onClick={onNavigate}
         >
           <BarChart2 size={20} />
           <span>Analytics</span>
@@ -46,6 +78,7 @@ const Sidebar = ({ theme, onToggleTheme }: SidebarProps) => {
         <Link
           href="/management"
           className={`${styles.navItem} ${router.pathname === "/management" ? styles.active : ""}`}
+          onClick={onNavigate}
         >
           <Database
             size={20}

@@ -45,7 +45,9 @@ const ManagementPage = () => {
   useEffect(() => {
     fetch("/api/auth/management")
       .then((r) => r.json())
-      .then((data) => { if (data.authenticated) setIsAuthenticated(true); })
+      .then((data) => {
+        if (data.authenticated) setIsAuthenticated(true);
+      })
       .catch(() => {})
       .finally(() => setIsCheckingAuth(false));
   }, []);
@@ -70,10 +72,10 @@ const ManagementPage = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   // ── Konfigurasi Tarif ─────────────────────────────────────────────────────
-  const [tarif, setTarif]             = useState<number | null>(null);
-  const [tarifInput, setTarifInput]   = useState("");
+  const [tarif, setTarif] = useState<number | null>(null);
+  const [tarifInput, setTarifInput] = useState("");
   const [isSavingTarif, setIsSavingTarif] = useState(false);
-  const [tarifError, setTarifError]   = useState<string | null>(null);
+  const [tarifError, setTarifError] = useState<string | null>(null);
   const [tarifSuccess, setTarifSuccess] = useState(false);
 
   // ── Top-up Modal ───────────────────────────────────────────────────────────
@@ -108,7 +110,12 @@ const ManagementPage = () => {
     fetchCards(true);
     fetch("/api/config/tarif")
       .then((r) => r.json())
-      .then((d) => { if (d.tarif) { setTarif(d.tarif); setTarifInput(String(d.tarif)); } })
+      .then((d) => {
+        if (d.tarif) {
+          setTarif(d.tarif);
+          setTarifInput(String(d.tarif));
+        }
+      })
       .catch(() => {});
     timerRef.current = setInterval(() => fetchCards(false), POLL_INTERVAL);
     return () => {
@@ -157,7 +164,9 @@ const ManagementPage = () => {
       setTarifSuccess(true);
       setTimeout(() => setTarifSuccess(false), 3000);
     } catch (err) {
-      setTarifError(err instanceof Error ? err.message : "Gagal menyimpan tarif.");
+      setTarifError(
+        err instanceof Error ? err.message : "Gagal menyimpan tarif.",
+      );
     } finally {
       setIsSavingTarif(false);
     }
@@ -277,8 +286,21 @@ const ManagementPage = () => {
   if (isCheckingAuth) {
     return (
       <div className={styles.container}>
-        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Loader2 size={32} style={{ animation: "spin 1s linear infinite", color: "var(--accent-cyan)" }} />
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Loader2
+            size={32}
+            style={{
+              animation: "spin 1s linear infinite",
+              color: "var(--accent-cyan)",
+            }}
+          />
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         </div>
       </div>
@@ -446,9 +468,7 @@ const ManagementPage = () => {
       <main className={styles.mainContent}>
         <header className={styles.header}>
           <h1 className={styles.title}>DATA MANAGEMENT</h1>
-          <p className={styles.subtitle}>
-            Manage RFID cards and system data
-          </p>
+          <p className={styles.subtitle}>Manage RFID cards and system data</p>
         </header>
 
         {/* ── Error banner ── */}
@@ -478,13 +498,34 @@ const ManagementPage = () => {
         <div className={styles.sectionCard} style={{ marginBottom: "1.5rem" }}>
           <h2 className={styles.sectionTitle}>KONFIGURASI TARIF TOL</h2>
           <form onSubmit={handleSaveTarif}>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: "1rem", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-end",
+                gap: "1rem",
+                flexWrap: "wrap",
+              }}
+            >
               <div style={{ flex: 1, minWidth: 200 }}>
-                <label style={{ color: "var(--text-subtle)", fontSize: "0.8rem", display: "block", marginBottom: "0.5rem" }}>
+                <label
+                  style={{
+                    color: "var(--text-subtle)",
+                    fontSize: "0.8rem",
+                    display: "block",
+                    marginBottom: "0.5rem",
+                  }}
+                >
                   Tarif Flat (Rp) &nbsp;
                   {tarif !== null && (
-                    <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
-                      — saat ini: <span style={{ color: "var(--accent-cyan)", fontWeight: 600 }}>{formatRupiah(tarif)}</span>
+                    <span
+                      style={{ color: "var(--text-muted)", fontWeight: 400 }}
+                    >
+                      — saat ini:{" "}
+                      <span
+                        style={{ color: "var(--accent-cyan)", fontWeight: 600 }}
+                      >
+                        {formatRupiah(tarif)}
+                      </span>
                     </span>
                   )}
                 </label>
@@ -497,7 +538,11 @@ const ManagementPage = () => {
                   className={styles.searchInput}
                   placeholder="Contoh: 5000"
                   value={tarifInput}
-                  onChange={(e) => { setTarifInput(e.target.value); setTarifError(null); setTarifSuccess(false); }}
+                  onChange={(e) => {
+                    setTarifInput(e.target.value);
+                    setTarifError(null);
+                    setTarifSuccess(false);
+                  }}
                 />
               </div>
               <button
@@ -507,17 +552,40 @@ const ManagementPage = () => {
                 style={{ padding: "0.65rem 1.25rem", whiteSpace: "nowrap" }}
               >
                 {isSavingTarif ? (
-                  <><Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> Menyimpan...</>
+                  <>
+                    <Loader2
+                      size={15}
+                      style={{ animation: "spin 1s linear infinite" }}
+                    />{" "}
+                    Menyimpan...
+                  </>
                 ) : (
                   "Simpan Tarif"
                 )}
               </button>
             </div>
             {tarifError && (
-              <p style={{ color: "var(--accent-red)", fontSize: "0.8rem", marginTop: "0.5rem" }}>⚠️ {tarifError}</p>
+              <p
+                style={{
+                  color: "var(--accent-red)",
+                  fontSize: "0.8rem",
+                  marginTop: "0.5rem",
+                }}
+              >
+                ⚠️ {tarifError}
+              </p>
             )}
             {tarifSuccess && (
-              <p style={{ color: "var(--accent-green)", fontSize: "0.8rem", marginTop: "0.5rem" }}>✓ Tarif berhasil diperbarui. Subscriber akan menggunakan tarif baru dalam &lt;60 detik.</p>
+              <p
+                style={{
+                  color: "var(--accent-green)",
+                  fontSize: "0.8rem",
+                  marginTop: "0.5rem",
+                }}
+              >
+                ✓ Tarif berhasil diperbarui. Subscriber akan menggunakan tarif
+                baru dalam &lt;60 detik.
+              </p>
             )}
           </form>
         </div>
@@ -539,7 +607,7 @@ const ManagementPage = () => {
                 ● LIVE
               </span>
             </h2>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className={styles.registryActions}>
               <button
                 onClick={() => fetchCards(true)}
                 disabled={isLoading}
@@ -568,14 +636,7 @@ const ManagementPage = () => {
           </div>
 
           {/* ── Search + Filter Status ── */}
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              margin: "1rem 0",
-              alignItems: "center",
-            }}
-          >
+          <div className={styles.filtersRow}>
             <div
               className={styles.searchContainer}
               style={{ flex: 1, margin: 0 }}
@@ -628,126 +689,128 @@ const ManagementPage = () => {
             </div>
           </div>
 
-          <table className={styles.tableContainer}>
-            <thead>
-              <tr>
-                <th className={styles.tableHeader}>Card UID</th>
-                <th className={styles.tableHeader}>Owner</th>
-                <th className={styles.tableHeader}>Registered Date</th>
-                <th className={styles.tableHeader}>Saldo</th>
-                <th className={styles.tableHeader}>Status</th>
-                <th className={styles.tableHeader}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading && cards.length === 0 ? (
+          <div className={styles.tableScroll}>
+            <table className={styles.tableContainer}>
+              <thead>
                 <tr>
-                  <td
-                    colSpan={6}
-                    style={{
-                      textAlign: "center",
-                      padding: "2rem",
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    <Loader2
-                      size={20}
-                      style={{
-                        animation: "spin 1s linear infinite",
-                        display: "inline-block",
-                      }}
-                    />
-                    <span style={{ marginLeft: "0.5rem" }}>
-                      Memuat data dari DynamoDB...
-                    </span>
-                  </td>
+                  <th className={styles.tableHeader}>Card UID</th>
+                  <th className={styles.tableHeader}>Owner</th>
+                  <th className={styles.tableHeader}>Registered Date</th>
+                  <th className={styles.tableHeader}>Saldo</th>
+                  <th className={styles.tableHeader}>Status</th>
+                  <th className={styles.tableHeader}>Actions</th>
                 </tr>
-              ) : filteredCards.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    style={{
-                      textAlign: "center",
-                      padding: "2rem",
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    No cards found matching your search.
-                  </td>
-                </tr>
-              ) : (
-                filteredCards.map((card) => (
-                  <tr key={card.uid} className={styles.row}>
-                    <td className={`${styles.cell} ${styles.uid}`}>
-                      {card.uid}
-                    </td>
+              </thead>
+              <tbody>
+                {isLoading && cards.length === 0 ? (
+                  <tr>
                     <td
-                      className={styles.cell}
-                      style={{ color: "white", fontWeight: 500 }}
-                    >
-                      {card.owner}
-                    </td>
-                    <td className={styles.cell}>
-                      <div className={styles.dateCell}>
-                        <Calendar size={14} />
-                        {card.date}
-                      </div>
-                    </td>
-                    <td
-                      className={styles.cell}
+                      colSpan={6}
                       style={{
-                        color:
-                          (card.saldo ?? 0) > 0
-                            ? "var(--accent-green)"
-                            : "var(--accent-red)",
-                        fontWeight: 600,
-                        whiteSpace: "nowrap",
+                        textAlign: "center",
+                        padding: "2rem",
+                        color: "var(--text-muted)",
                       }}
                     >
-                      {formatRupiah(card.saldo ?? 0)}
-                    </td>
-                    <td className={styles.cell}>
-                      <span
-                        className={`${styles.statusBadge} ${card.status === "ACTIVE" ? styles.activeBadge : styles.inactiveBadge}`}
-                      >
-                        {card.status}
+                      <Loader2
+                        size={20}
+                        style={{
+                          animation: "spin 1s linear infinite",
+                          display: "inline-block",
+                        }}
+                      />
+                      <span style={{ marginLeft: "0.5rem" }}>
+                        Memuat data dari DynamoDB...
                       </span>
                     </td>
-                    <td className={styles.cell}>
-                      <div style={{ display: "flex", gap: "6px" }}>
-                        <button
-                          onClick={() => {
-                            setTopupCard(card);
-                            setTopupJumlah("");
-                            setTopupError(null);
-                          }}
-                          title="Top-up Saldo"
-                          style={{
-                            background: "rgba(16,185,129,0.1)",
-                            border: "1px solid rgba(16,185,129,0.3)",
-                            borderRadius: 6,
-                            padding: "6px 8px",
-                            cursor: "pointer",
-                            color: "var(--accent-green)",
-                            display: "flex",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Wallet size={15} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(card.uid)}
-                          className={styles.deleteBtn}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                  </tr>
+                ) : filteredCards.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      style={{
+                        textAlign: "center",
+                        padding: "2rem",
+                        color: "var(--text-muted)",
+                      }}
+                    >
+                      No cards found matching your search.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredCards.map((card) => (
+                    <tr key={card.uid} className={styles.row}>
+                      <td className={`${styles.cell} ${styles.uid}`}>
+                        {card.uid}
+                      </td>
+                      <td
+                        className={styles.cell}
+                        style={{ color: "white", fontWeight: 500 }}
+                      >
+                        {card.owner}
+                      </td>
+                      <td className={styles.cell}>
+                        <div className={styles.dateCell}>
+                          <Calendar size={14} />
+                          {card.date}
+                        </div>
+                      </td>
+                      <td
+                        className={styles.cell}
+                        style={{
+                          color:
+                            (card.saldo ?? 0) > 0
+                              ? "var(--accent-green)"
+                              : "var(--accent-red)",
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {formatRupiah(card.saldo ?? 0)}
+                      </td>
+                      <td className={styles.cell}>
+                        <span
+                          className={`${styles.statusBadge} ${card.status === "ACTIVE" ? styles.activeBadge : styles.inactiveBadge}`}
+                        >
+                          {card.status}
+                        </span>
+                      </td>
+                      <td className={styles.cell}>
+                        <div style={{ display: "flex", gap: "6px" }}>
+                          <button
+                            onClick={() => {
+                              setTopupCard(card);
+                              setTopupJumlah("");
+                              setTopupError(null);
+                            }}
+                            title="Top-up Saldo"
+                            style={{
+                              background: "rgba(16,185,129,0.1)",
+                              border: "1px solid rgba(16,185,129,0.3)",
+                              borderRadius: 6,
+                              padding: "6px 8px",
+                              cursor: "pointer",
+                              color: "var(--accent-green)",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <Wallet size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(card.uid)}
+                            className={styles.deleteBtn}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* ── Modal Add Card ── */}

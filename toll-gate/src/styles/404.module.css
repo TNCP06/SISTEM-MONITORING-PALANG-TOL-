@@ -59,7 +59,7 @@
 .button {
   display: inline-block;
   padding: 12px 28px;
-  background: var(--accent-green);
+  background: #0ea5e9;
   color: var(--accent-cyan-contrast);
   text-decoration: none;
   border-radius: 6px;

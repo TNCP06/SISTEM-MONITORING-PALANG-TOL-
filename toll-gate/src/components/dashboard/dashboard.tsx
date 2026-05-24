@@ -15,7 +15,6 @@ import {
   Wallet,
 } from "lucide-react";
 import styles from "@/styles/dashboard.module.css";
-
 type GateStatus = "OPEN" | "CLOSED";
 type TrafficLevel = "SMOOTH" | "MODERATE" | "CONGESTED";
 type Transaction = {
@@ -628,16 +627,9 @@ export function Dashboard() {
         </div>
 
         {/* ---- FILTER BAR */}
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            alignItems: "center",
-            padding: "12px 16px",
-          }}
-        >
+        <div className={styles.filterBar}>
           {/* Search Card ID */}
-          <div style={{ position: "relative", flex: "2 1 180px" }}>
+          <div className={`${styles.filterItem} ${styles.filterItemWide}`}>
             <Search
               size={14}
               style={{
@@ -672,7 +664,7 @@ export function Dashboard() {
           </div>
 
           {/* Filter Bulan */}
-          <div style={{ position: "relative", flex: "1 1 140px" }}>
+          <div className={styles.filterItem}>
             <Filter
               size={14}
               style={{
@@ -712,7 +704,7 @@ export function Dashboard() {
           </div>
 
           {/* Filter Status */}
-          <div style={{ position: "relative", flex: "1 1 140px" }}>
+          <div className={styles.filterItem}>
             <Filter
               size={14}
               style={{
@@ -782,30 +774,7 @@ export function Dashboard() {
           <button
             onClick={exportCSV}
             title={`Export ${filteredTransactions.length} transaksi ke CSV`}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "8px 14px",
-              borderRadius: 6,
-              border: "1px solid var(--chip-active-border)",
-              background: "var(--chip-active-bg)",
-              color: "var(--accent-cyan)",
-              fontSize: "0.78rem",
-              fontWeight: 600,
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background =
-                "var(--chip-active-bg-strong)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background =
-                "var(--chip-active-bg)";
-            }}
+            className={styles.exportButton}
           >
             <Download size={14} />
             EXPORT CSV ({filteredTransactions.length})
