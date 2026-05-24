@@ -127,6 +127,18 @@
   margin-bottom: 1.5rem;
 }
 
+.registryActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filtersRow {
+  display: flex;
+  gap: 10px;
+  margin: 1rem 0;
+  align-items: center;
+}
+
 .addBtn {
   background: var(--accent-green);
   color: var(--accent-cyan-contrast);
@@ -172,6 +184,11 @@
 .tableContainer {
   width: 100%;
   border-collapse: collapse;
+}
+
+.tableScroll {
+  width: 100%;
+  overflow-x: auto;
 }
 
 .tableHeader {
@@ -249,6 +266,50 @@
 
 .textRed {
   color: var(--accent-red);
+}
+
+@media (max-width: 1024px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    padding: 1rem;
+  }
+
+  .registryHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .registryActions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .filtersRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tableContainer {
+    min-width: 680px;
+  }
+
+  .tableScroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tableHeader {
+    font-size: 0.65rem;
+  }
+
+  .cell {
+    padding: 0.9rem 0;
+  }
 }
 
 .dateCell {
