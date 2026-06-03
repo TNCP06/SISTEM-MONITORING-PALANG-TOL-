@@ -1,80 +1,85 @@
-import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { NextRequest, NextResponse } from "next/server";
 
-const client = DynamoDBDocumentClient.from(
-  new DynamoDBClient({
-    region: process.env.AWS_REGION,
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    },
-  }),
-);
+const s3 = new S3Client({
+  region: process.env.AWS_REGION ?? "ap-southeast-1",
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
-const DEFAULT_TOLL_FEE = 5000;
+const BUCKET        = "tol-hadoop-raw-caturp";
+const ANALYTICS_KEY = "analytics/result.json";
+
+interface TrafficEntry  { tanggal: string; jam: string; masuk: number; keluar: number }
+interface AccessEntry   { tanggal: string; diterima: number; ditolak: number }
+interface RevenueEntry  { tanggal: string; revenue: number }
+interface AnalyticsData {
+  trafficVolume:    TrafficEntry[];
+  accessValidation: AccessEntry[];
+  revenueHarian:    RevenueEntry[];
+}
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const from = searchParams.get("from"); // YYYY-MM-DD
-    const to   = searchParams.get("to");   // YYYY-MM-DD
+    const from = searchParams.get("from") ?? "2000-01-01";
+    const to   = searchParams.get("to")   ?? "2099-12-31";
 
-    const result = await client.send(new ScanCommand({ TableName: "tol_events" }));
-    let items = result.Items || [];
+    // Baca hasil Hadoop dari S3
+    const cmd      = new GetObjectCommand({ Bucket: BUCKET, Key: ANALYTICS_KEY });
+    const response = await s3.send(cmd);
+    const body     = await response.Body?.transformToString();
+    const data: AnalyticsData = JSON.parse(body!);
 
-    // Filter berdasarkan date range jika diberikan
-    if (from || to) {
-      const fromMs = from ? new Date(from + "T00:00:00").getTime() : 0;
-      const toMs   = to   ? new Date(to   + "T23:59:59").getTime() : Infinity;
-      items = items.filter((item) => {
-        const t = new Date(item.waktu).getTime();
-        return t >= fromMs && t <= toMs;
-      });
+    // Filter berdasarkan date range
+    const trafficFiltered = data.trafficVolume.filter(
+      (t) => t.tanggal >= from && t.tanggal <= to
+    );
+    const accessFiltered = data.accessValidation.filter(
+      (a) => a.tanggal >= from && a.tanggal <= to
+    );
+    const revenueHarian = data.revenueHarian
+      .filter((r) => r.tanggal >= from && r.tanggal <= to)
+      .sort((a, b) => a.tanggal.localeCompare(b.tanggal));
+
+    // ── Traffic Volume per jam (agregasi semua tanggal dalam range) ──────────
+    const hourMap: Record<string, { masuk: number; keluar: number }> = {};
+    for (let h = 0; h < 24; h++) {
+      hourMap[`${String(h).padStart(2, "0")}:00`] = { masuk: 0, keluar: 0 };
     }
-
-    // ── Traffic Volume per jam (MASUK + KELUAR) ──────────────────────────────
-    const hourMap: Record<string, { jam: string; masuk: number; keluar: number }> = {};
-    for (const item of items) {
-      if (item.status !== "DITERIMA") continue;
-      const dt  = new Date(item.waktu);
-      const jam = `${String(dt.getHours()).padStart(2, "0")}:00`;
-      if (!hourMap[jam]) hourMap[jam] = { jam, masuk: 0, keluar: 0 };
-      if (item.tipe_gate === "MASUK")  hourMap[jam].masuk++;
-      if (item.tipe_gate === "KELUAR") hourMap[jam].keluar++;
+    for (const t of trafficFiltered) {
+      if (hourMap[t.jam]) {
+        hourMap[t.jam].masuk  += t.masuk;
+        hourMap[t.jam].keluar += t.keluar;
+      }
     }
-    const trafficVolume = Array.from({ length: 24 }, (_, h) => {
-      const jam = `${String(h).padStart(2, "0")}:00`;
-      return hourMap[jam] ?? { jam, masuk: 0, keluar: 0 };
-    });
+    const trafficVolume = Object.entries(hourMap).map(([jam, v]) => ({
+      jam,
+      masuk:  v.masuk,
+      keluar: v.keluar,
+    }));
 
     // ── Access Validation (DITERIMA vs DITOLAK) ──────────────────────────────
-    const diterima = items.filter((i) => i.status === "DITERIMA").length;
-    const ditolak  = items.filter((i) => i.status === "DITOLAK").length;
+    let totalDiterima = 0;
+    let totalDitolak  = 0;
+    for (const a of accessFiltered) {
+      totalDiterima += a.diterima;
+      totalDitolak  += a.ditolak;
+    }
     const accessValidation = [
-      { name: "Diterima", value: diterima },
-      { name: "Ditolak",  value: ditolak  },
+      { name: "Diterima", value: totalDiterima },
+      { name: "Ditolak",  value: totalDitolak  },
     ];
 
-    // ── Revenue harian (dari KELUAR DITERIMA) ────────────────────────────────
-    const revenueMap: Record<string, number> = {};
-    for (const item of items) {
-      if (item.status !== "DITERIMA" || item.tipe_gate !== "KELUAR") continue;
-      const tanggal = item.waktu.slice(0, 10); // YYYY-MM-DD
-      revenueMap[tanggal] = (revenueMap[tanggal] || 0) + (Number(item.biaya) || DEFAULT_TOLL_FEE);
-    }
-    const revenueHarian = Object.entries(revenueMap)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([tanggal, revenue]) => ({ tanggal, revenue }));
-
     // ── Summary stats ────────────────────────────────────────────────────────
-    const totalMasuk  = items.filter((i) => i.status === "DITERIMA" && i.tipe_gate === "MASUK").length;
-    const totalKeluar = items.filter((i) => i.status === "DITERIMA" && i.tipe_gate === "KELUAR").length;
-    const totalRevenue = items
-      .filter((i) => i.status === "DITERIMA" && i.tipe_gate === "KELUAR")
-      .reduce((sum, i) => sum + (Number(i.biaya) || DEFAULT_TOLL_FEE), 0);
-    const successRate = items.length > 0
-      ? Math.round((diterima / items.length) * 100 * 10) / 10
+    const totalMasuk     = trafficFiltered.reduce((s, t) => s + t.masuk,  0);
+    const totalKeluar    = trafficFiltered.reduce((s, t) => s + t.keluar, 0);
+    const totalRevenue   = revenueHarian.reduce((s, r) => s + r.revenue, 0);
+    const totalTransaksi = totalDiterima + totalDitolak;
+    const successRate    = totalTransaksi > 0
+      ? Math.round((totalDiterima / totalTransaksi) * 10000) / 100
       : 0;
 
     return NextResponse.json({
@@ -84,13 +89,14 @@ export async function GET(req: NextRequest) {
       stats: {
         totalMasuk,
         totalKeluar,
-        diDalam: totalMasuk - totalKeluar,
+        diDalam:       totalMasuk - totalKeluar,
         totalRevenue,
-        totalTransaksi: items.length,
+        totalTransaksi,
         successRate,
       },
     });
   } catch (err) {
+    console.error("Analytics error:", err);
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }
