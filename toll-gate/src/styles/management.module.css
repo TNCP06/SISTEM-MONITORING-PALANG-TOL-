@@ -75,6 +75,30 @@
   margin-bottom: 1.5rem;
 }
 
+.realTimeIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 0.75rem;
+  vertical-align: middle;
+}
+
+.realTimeDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--accent-green);
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 8px var(--accent-green);
+}
+
+.realTimeText {
+  font-size: 0.7rem;
+  color: var(--accent-green);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .exportButtons {
   display: flex;
   gap: 1.5rem;
@@ -154,6 +178,24 @@
   text-transform: uppercase;
 }
 
+.refreshBtn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-strong);
+  padding: 0.7rem 0.9rem;
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+}
+
+.refreshBtn:hover {
+  background: var(--input-bg-soft);
+}
+
+:global([data-theme="light"]) .refreshBtn {
+  color: #000;
+}
+
 .searchContainer {
   position: relative;
   margin-bottom: 1.5rem;
@@ -215,6 +257,15 @@
   font-weight: 600;
 }
 
+.ownerCell {
+  color: var(--text-strong);
+  font-weight: 500;
+}
+
+:global([data-theme="light"]) .ownerCell {
+  color: #000;
+}
+
 .dateCell {
   display: flex;
   align-items: center;
@@ -266,6 +317,17 @@
 
 .textRed {
   color: var(--accent-red);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @media (max-width: 1024px) {

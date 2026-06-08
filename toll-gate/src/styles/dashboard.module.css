@@ -239,6 +239,32 @@
     0 0 8px rgba(0, 212, 255, 0.6);
 }
 
+.gateIndicatorExitActive {
+  border: 2px solid var(--accent-magenta);
+  background: rgba(236, 72, 153, 0.25);
+  box-shadow:
+    0 0 12px rgba(236, 72, 153, 0.4),
+    inset 0 0 8px rgba(236, 72, 153, 0.1);
+  animation: pulse 2s infinite;
+}
+
+.gateIndicatorExitDot {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: var(--text-faint);
+  transition: all 0.3s ease;
+}
+
+.gateIndicatorExitDotActive {
+  width: 2.2rem;
+  height: 2.2rem;
+  background-color: var(--accent-magenta);
+  box-shadow:
+    0 0 16px var(--accent-magenta),
+    0 0 8px rgba(236, 72, 153, 0.3);
+}
+
 .gateButtons {
   display: grid;
   grid-template-columns: 1fr 1fr;
