@@ -477,6 +477,7 @@ export function Dashboard() {
               ENTRY GATE
             </h3>
           </div>
+
           <div className={styles.gateContent}>
             <div className={styles.gateStatus}>
               <div className={styles.gateStatusLeft}>
@@ -493,8 +494,10 @@ export function Dashboard() {
                     strokeWidth={1}
                   />
                 )}
+
                 <div>
                   <p className={styles.gateStatusLabel}>STATUS</p>
+
                   <p
                     className={styles.gateStatusValue}
                     style={{
@@ -508,26 +511,39 @@ export function Dashboard() {
                   </p>
                 </div>
               </div>
+
               <div
-                className={`${styles.gateIndicator} ${entryGateStatus === "OPEN" ? styles.gateIndicatorActive : ""}`}
+                className={`${styles.gateIndicator} ${
+                  entryGateStatus === "OPEN" ? styles.gateIndicatorActive : ""
+                }`}
               >
                 <div
-                  className={`${styles.gateIndicatorDot} ${entryGateStatus === "OPEN" ? styles.gateIndicatorDotActive : ""}`}
+                  className={`${styles.gateIndicatorDot} ${
+                    entryGateStatus === "OPEN"
+                      ? styles.gateIndicatorDotActive
+                      : ""
+                  }`}
                 />
               </div>
             </div>
+
             <div className={styles.gateButtons}>
               <button
                 onClick={() => handleGateControl("ENTRY", "OPEN")}
                 disabled={entryGateStatus === "OPEN"}
-                className={`${styles.gateBtn} ${styles.gateBtnOpen} ${entryGateStatus === "OPEN" ? styles.gateBtnDisabled : ""}`}
+                className={`${styles.gateBtn} ${styles.gateBtnOpen} ${
+                  entryGateStatus === "OPEN" ? styles.gateBtnDisabled : ""
+                }`}
               >
                 OPEN GATE
               </button>
+
               <button
                 onClick={() => handleGateControl("ENTRY", "CLOSE")}
                 disabled={entryGateStatus === "CLOSED"}
-                className={`${styles.gateBtn} ${styles.gateBtnClose} ${entryGateStatus === "CLOSED" ? styles.gateBtnDisabled : ""}`}
+                className={`${styles.gateBtn} ${styles.gateBtnClose} ${
+                  entryGateStatus === "CLOSED" ? styles.gateBtnDisabled : ""
+                }`}
               >
                 CLOSE GATE
               </button>
@@ -545,6 +561,7 @@ export function Dashboard() {
               EXIT GATE
             </h3>
           </div>
+
           <div className={styles.gateContent}>
             <div className={styles.gateStatus}>
               <div className={styles.gateStatusLeft}>
@@ -561,8 +578,10 @@ export function Dashboard() {
                     strokeWidth={1}
                   />
                 )}
+
                 <div>
                   <p className={styles.gateStatusLabel}>STATUS</p>
+
                   <p
                     className={styles.gateStatusValue}
                     style={{
@@ -576,38 +595,41 @@ export function Dashboard() {
                   </p>
                 </div>
               </div>
+
               <div
-                className={`${styles.gateIndicator} ${exitGateStatus === "OPEN" ? styles.gateIndicatorActive : ""}`}
-                style={{
-                  borderColor:
-                    exitGateStatus === "OPEN"
-                      ? "rgba(236,72,153,0.3)"
-                      : undefined,
-                }}
+                className={`${styles.gateIndicator} ${
+                  exitGateStatus === "OPEN"
+                    ? styles.gateIndicatorExitActive
+                    : ""
+                }`}
               >
                 <div
-                  className={`${styles.gateIndicatorDot} ${exitGateStatus === "OPEN" ? styles.gateIndicatorDotActive : ""}`}
-                  style={{
-                    background:
-                      exitGateStatus === "OPEN"
-                        ? "var(--accent-magenta)"
-                        : "var(--text-muted)",
-                  }}
+                  className={`${styles.gateIndicatorDot} ${
+                    exitGateStatus === "OPEN"
+                      ? styles.gateIndicatorExitDotActive
+                      : ""
+                  }`}
                 />
               </div>
             </div>
+
             <div className={styles.gateButtons}>
               <button
                 onClick={() => handleGateControl("EXIT", "OPEN")}
                 disabled={exitGateStatus === "OPEN"}
-                className={`${styles.gateBtn} ${styles.gateBtnOpen} ${exitGateStatus === "OPEN" ? styles.gateBtnDisabled : ""}`}
+                className={`${styles.gateBtn} ${styles.gateBtnOpen} ${
+                  exitGateStatus === "OPEN" ? styles.gateBtnDisabled : ""
+                }`}
               >
                 OPEN GATE
               </button>
+
               <button
                 onClick={() => handleGateControl("EXIT", "CLOSE")}
                 disabled={exitGateStatus === "CLOSED"}
-                className={`${styles.gateBtn} ${styles.gateBtnClose} ${exitGateStatus === "CLOSED" ? styles.gateBtnDisabled : ""}`}
+                className={`${styles.gateBtn} ${styles.gateBtnClose} ${
+                  exitGateStatus === "CLOSED" ? styles.gateBtnDisabled : ""
+                }`}
               >
                 CLOSE GATE
               </button>

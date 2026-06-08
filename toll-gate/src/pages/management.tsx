@@ -83,6 +83,10 @@ const ManagementPage = () => {
   const [topupJumlah, setTopupJumlah] = useState("");
   const [isTopuping, setIsTopuping] = useState(false);
   const [topupError, setTopupError] = useState<string | null>(null);
+  const [topupSuccess, setTopupSuccess] = useState<string | null>(null);
+  const [cardToDelete, setCardToDelete] = useState<RFIDCard | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
 
   // ── Fetch kartu ────────────────────────────────────────────────────────────
   const fetchCards = useCallback(async (showLoader = false) => {
@@ -231,8 +235,13 @@ const ManagementPage = () => {
           c.uid === topupCard.uid ? { ...c, saldo: newSaldo } : c,
         ),
       );
-      setTopupCard(null);
-      setTopupJumlah("");
+      setTopupError(null);
+      setTopupSuccess("Top-up saldo berhasil.");
+      setTimeout(() => {
+        setTopupCard(null);
+        setTopupJumlah("");
+        setTopupSuccess(null);
+      }, 1200);
     } catch (err) {
       setTopupError(
         err instanceof Error ? err.message : "Gagal mengupdate saldo.",
@@ -244,7 +253,8 @@ const ManagementPage = () => {
 
   // ── Delete ─────────────────────────────────────────────────────────────────
   const handleDelete = async (uid: string) => {
-    if (!confirm(`Hapus kartu ${uid}?`)) return;
+    setDeleteError(null);
+    setDeleteSuccess(null);
     try {
       const res = await fetch(`/api/cards/${encodeURIComponent(uid)}`, {
         method: "DELETE",
@@ -254,8 +264,16 @@ const ManagementPage = () => {
         throw new Error(json.error ?? "Gagal menghapus kartu.");
       }
       setCards((prev) => prev.filter((c) => c.uid !== uid));
+      setCardToDelete(null);
+      setDeleteSuccess("Kartu berhasil dihapus.");
+      setTimeout(() => {
+        setDeleteSuccess(null);
+      }, 2000);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Gagal menghapus kartu.");
+      setCardToDelete(null);
+      setDeleteError(
+        err instanceof Error ? err.message : "Gagal menghapus kartu.",
+      );
     }
   };
 
@@ -549,7 +567,12 @@ const ManagementPage = () => {
                 type="submit"
                 disabled={isSavingTarif}
                 className={styles.addBtn}
-                style={{ padding: "0.65rem 1.25rem", whiteSpace: "nowrap" }}
+                style={{
+                  height: "45px",
+                  padding: "0 1.25rem",
+                  whiteSpace: "nowrap",
+                  alignSelf: "flex-end",
+                }}
               >
                 {isSavingTarif ? (
                   <>
@@ -595,27 +618,16 @@ const ManagementPage = () => {
           <div className={styles.registryHeader}>
             <h2 className={styles.sectionTitle} style={{ marginBottom: 0 }}>
               RFID CARD REGISTRY
-              <span
-                style={{
-                  marginLeft: "0.75rem",
-                  fontSize: "0.7rem",
-                  fontWeight: 400,
-                  color: "var(--accent-green)",
-                  verticalAlign: "middle",
-                }}
-              >
-                ● LIVE
-              </span>
+              <div className={styles.realTimeIndicator}>
+                <div className={styles.realTimeDot} />
+                <span className={styles.realTimeText}>REAL-TIME</span>
+              </div>
             </h2>
             <div className={styles.registryActions}>
               <button
                 onClick={() => fetchCards(true)}
                 disabled={isLoading}
-                className={styles.addBtn}
-                style={{
-                  background: "transparent",
-                  border: "1px solid var(--border-color)",
-                }}
+                className={styles.refreshBtn}
                 title="Refresh"
               >
                 <RefreshCw
@@ -743,10 +755,7 @@ const ManagementPage = () => {
                       <td className={`${styles.cell} ${styles.uid}`}>
                         {card.uid}
                       </td>
-                      <td
-                        className={styles.cell}
-                        style={{ color: "white", fontWeight: 500 }}
-                      >
+                      <td className={`${styles.cell} ${styles.ownerCell}`}>
                         {card.owner}
                       </td>
                       <td className={styles.cell}>
@@ -798,7 +807,10 @@ const ManagementPage = () => {
                             <Wallet size={15} />
                           </button>
                           <button
-                            onClick={() => handleDelete(card.uid)}
+                            onClick={() => {
+                              setDeleteError(null);
+                              setCardToDelete(card);
+                            }}
                             className={styles.deleteBtn}
                           >
                             <Trash2 size={16} />
@@ -1010,7 +1022,7 @@ const ManagementPage = () => {
               >
                 <h3
                   style={{
-                    color: "white",
+                    color: "var(--text-strong)",
                     margin: 0,
                     display: "flex",
                     alignItems: "center",
@@ -1026,6 +1038,7 @@ const ManagementPage = () => {
                   onClick={() => {
                     setTopupCard(null);
                     setTopupError(null);
+                    setTopupSuccess(null);
                   }}
                 />
               </div>
@@ -1034,7 +1047,8 @@ const ManagementPage = () => {
                 style={{
                   marginBottom: "1rem",
                   padding: "0.75rem 1rem",
-                  background: "rgba(255,255,255,0.04)",
+                  background: "var(--input-bg-soft)",
+                  border: "1px solid var(--border-color)",
                   borderRadius: 8,
                 }}
               >
@@ -1091,6 +1105,23 @@ const ManagementPage = () => {
                   }}
                 >
                   ⚠️ {topupError}
+                </div>
+              )}
+
+              {topupSuccess && (
+                <div
+                  style={{
+                    background: "rgba(16,185,129,0.12)",
+                    border: "1px solid rgba(16,185,129,0.28)",
+                    borderRadius: "8px",
+                    padding: "0.75rem",
+                    marginBottom: "1rem",
+                    color: "var(--accent-green)",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  ✓ {topupSuccess}
                 </div>
               )}
 
@@ -1161,6 +1192,242 @@ const ManagementPage = () => {
                   )}
                 </button>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal Konfirmasi Hapus ── */}
+        {cardToDelete && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(0,0,0,0.8)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+            }}
+            onClick={() => setCardToDelete(null)}
+          >
+            <div
+              style={{
+                backgroundColor: "var(--surface-1)",
+                padding: "1.75rem",
+                borderRadius: "12px",
+                border: "1px solid var(--border-color)",
+                width: "420px",
+                maxWidth: "calc(100vw - 2rem)",
+                boxShadow: "0 24px 60px rgba(0,0,0,0.4)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ color: "var(--text-strong)", margin: 0 }}>
+                Hapus Kartu
+              </h3>
+              <p
+                style={{
+                  color: "var(--text-muted)",
+                  margin: "0.75rem 0 1.25rem",
+                  lineHeight: 1.6,
+                }}
+              >
+                Yakin ingin menghapus kartu <strong>{cardToDelete.uid}</strong>?
+                Tindakan ini tidak bisa dibatalkan.
+              </p>
+
+              {deleteError && (
+                <div
+                  style={{
+                    background: "rgba(239,68,68,0.1)",
+                    border: "1px solid rgba(239,68,68,0.3)",
+                    borderRadius: "8px",
+                    padding: "0.75rem",
+                    marginBottom: "1rem",
+                    color: "var(--accent-red)",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  ⚠️ {deleteError}
+                </div>
+              )}
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "0.75rem",
+                  flexWrap: "wrap",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCardToDelete(null);
+                    setDeleteError(null);
+                  }}
+                  style={{
+                    padding: "0.8rem 1rem",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-color)",
+                    background: "var(--input-bg-soft)",
+                    color: "var(--text-strong)",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(cardToDelete.uid)}
+                  style={{
+                    padding: "0.8rem 1rem",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(239,68,68,0.35)",
+                    background: "rgba(239,68,68,0.14)",
+                    color: "var(--accent-red)",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                  }}
+                >
+                  Hapus
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Toast Sukses Hapus ── */}
+        {deleteSuccess && !cardToDelete && !deleteError && (
+          <div
+            aria-live="polite"
+            style={{
+              position: "fixed",
+              top: "1rem",
+              right: "1rem",
+              zIndex: 1100,
+              width: "min(360px, calc(100vw - 2rem))",
+              backgroundColor: "var(--surface-1)",
+              border: "1px solid rgba(16,185,129,0.3)",
+              borderLeft: "4px solid var(--accent-green)",
+              borderRadius: "12px",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.35)",
+              padding: "0.95rem 1rem",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "0.75rem",
+            }}
+          >
+            <div
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: "999px",
+                background: "rgba(16,185,129,0.12)",
+                color: "var(--accent-green)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                fontWeight: 800,
+              }}
+            >
+              ✓
+            </div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div
+                style={{
+                  color: "var(--text-strong)",
+                  fontWeight: 700,
+                  fontSize: "0.9rem",
+                  lineHeight: 1.3,
+                }}
+              >
+                Berhasil
+              </div>
+              <div
+                style={{
+                  color: "var(--text-muted)",
+                  marginTop: "0.2rem",
+                  fontSize: "0.82rem",
+                  lineHeight: 1.45,
+                  wordBreak: "break-word",
+                }}
+              >
+                {deleteSuccess}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDeleteSuccess(null)}
+              style={{
+                border: "none",
+                background: "transparent",
+                color: "var(--text-faint)",
+                cursor: "pointer",
+                padding: 0,
+                lineHeight: 1,
+                fontSize: "1rem",
+                flexShrink: 0,
+              }}
+              aria-label="Tutup notifikasi"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* ── Modal Error Hapus ── */}
+        {deleteError && !cardToDelete && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(0,0,0,0.8)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+            }}
+            onClick={() => setDeleteError(null)}
+          >
+            <div
+              style={{
+                backgroundColor: "var(--surface-1)",
+                padding: "1.75rem",
+                borderRadius: "12px",
+                border: "1px solid var(--border-color)",
+                width: "380px",
+                maxWidth: "calc(100vw - 2rem)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ color: "var(--text-strong)", margin: 0 }}>
+                Gagal Menghapus
+              </h3>
+              <p
+                style={{ color: "var(--text-muted)", margin: "0.75rem 0 1rem" }}
+              >
+                {deleteError}
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={() => setDeleteError(null)}
+                  style={{
+                    padding: "0.8rem 1rem",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-color)",
+                    background: "var(--input-bg-soft)",
+                    color: "var(--text-strong)",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
+                >
+                  Tutup
+                </button>
+              </div>
             </div>
           </div>
         )}
