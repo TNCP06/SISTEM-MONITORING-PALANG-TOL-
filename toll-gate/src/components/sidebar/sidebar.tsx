@@ -29,8 +29,8 @@ const Sidebar = ({
   const router = useRouter();
   const isLight = theme === "light";
   const logoSrc = isLight
-    ? "/logo-horizontal-light.svg"
-    : "/logo-horizontal.svg";
+    ? "/tap-toll-light.svg"
+    : "/tap-toll-dark.svg";
 
   return (
     <aside
