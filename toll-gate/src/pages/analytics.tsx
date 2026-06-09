@@ -747,7 +747,7 @@ const AnalyticsPage = () => {
   return (
     <div className={styles.container}>
       <Head>
-        <title>Data Analytics | Smart Toll Gate</title>
+        <title>Data Analytics | TapToll</title>
       </Head>
 
       <main className={styles.mainContent}>

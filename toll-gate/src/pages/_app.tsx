@@ -91,7 +91,7 @@ export default function App({ Component, pageProps }: AppProps) {
           >
             <Menu size={20} />
           </button>
-          <span className="mobileHeaderTitle">TOLLYTICS</span>
+          <span className="mobileHeaderTitle">TAPTOLL</span>
           <div style={{ width: 40 }} />
         </header>
         <Component {...pageProps} />

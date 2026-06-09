@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <Head>
-        <title>Dashboard | Smart Toll Gate</title>
+        <title>Dashboard | TapToll</title>
       </Head>
 
       <Dashboard />

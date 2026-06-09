@@ -329,7 +329,7 @@ const ManagementPage = () => {
     return (
       <div className={styles.container}>
         <Head>
-          <title>Data Management | Smart Toll Gate</title>
+          <title>Data Management | TapToll</title>
         </Head>
         <div
           style={{
